@@ -123,6 +123,9 @@
   <ItemGroup>
     <Resource Include="data\earth_tone_brown_blue_sky_mountain_nature_glacier-272202.jpg" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="programmersLog.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

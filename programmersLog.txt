@@ -1,0 +1,8 @@
+﻿August 29th, 2018 (pfiguero)
+
+First version that works... kind of... ;) 
+It is based on DepthBasics-WPF from the Kinect Studio Browser
+We want to show several images, and interact with the Kinect
+
+Currently, MainWindow.ProcessDepthFrameData takes the kinect´s depth info and scales it
+to the whole screen in the first window... but coordinates are flipped... 
