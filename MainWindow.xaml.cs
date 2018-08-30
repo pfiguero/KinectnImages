@@ -236,10 +236,10 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         private void Reader_FrameArrived(object sender, DepthFrameArrivedEventArgs e)
         {
             bool depthFrameProcessed = false;
-
-            if (frameCount++ % 15 != 0)
+            
+            if (frameCount++ % 10 != 0)
                 return;
-
+                
             using (DepthFrame depthFrame = e.FrameReference.AcquireFrame())
             {
                 if (depthFrame != null)
@@ -298,8 +298,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 int row = i / image.PixelHeight;
 
                 // convert to the space of the Kinect image
-                int cE = (int) (((double)col * this.depthFrameDescription.Width) / ((double)image.PixelWidth));
-                int rE = (int) (((double)row * this.depthFrameDescription.Height) / ((double)image.PixelHeight ));
+                int rE = (int) (((double)col * this.depthFrameDescription.Width) / ((double)image.PixelWidth));
+                int cE = (int) (((double)row * this.depthFrameDescription.Height) / ((double)image.PixelHeight ));
                 int iE = rE + cE * this.depthFrameDescription.Width; // * this.depthFrameDescription.BytesPerPixel;
 
                 ushort depth = 0;
