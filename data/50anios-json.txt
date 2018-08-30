@@ -1,0 +1,7 @@
+﻿{
+  "directory": "50anios",
+  "images": [
+    {"filename": "001-26.jpg", "title": "El W"},
+    {"filename": "001-169.jpg", "title": "Francisco Rueda"}
+  ]
+}
