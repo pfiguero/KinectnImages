@@ -15,34 +15,12 @@ namespace Microsoft.Samples.Kinect.DepthBasics
     using System.Windows.Resources;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
-    using Microsoft.Kinect;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// Interaction logic for MainWindow
     /// </summary>
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window
     {
-        /// <summary>
-        /// Map depth range to byte range
-        /// </summary>
-        private const int MapDepthToByte = 8000 / 256;
-        
-        /// <summary>
-        /// Active Kinect sensor
-        /// </summary>
-        private KinectSensor kinectSensor = null;
-
-        /// <summary>
-        /// Reader for depth frames
-        /// </summary>
-        private DepthFrameReader depthFrameReader = null;
-
-        /// <summary>
-        /// Description of the data contained in the depth frame
-        /// </summary>
-        private FrameDescription depthFrameDescription = null;
-
         /// <summary>
         /// This is the image we'll show
         /// </summary>
@@ -65,27 +43,24 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// </summary>
         private string statusText = null;
 
-        private static int frameCount = 0;
+        private static KinectManager kinectManager = null;
+
+        private static ImageManager imageManager = null;
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
         public MainWindow()
         {
-            // get the kinectSensor object
-            this.kinectSensor = KinectSensor.GetDefault();
+            if( kinectManager == null || imageManager== null  )
+            {
+                kinectManager = new KinectManager();
+                imageManager = new ImageManager();
+            }
 
-            // open the reader for the depth frames
-            this.depthFrameReader = this.kinectSensor.DepthFrameSource.OpenReader();
-
-            // wire handler for frame arrival
-            this.depthFrameReader.FrameArrived += this.Reader_FrameArrived;
-
-            // get FrameDescription from DepthFrameSource
-            this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
 
             // allocate space to put the pixels being received and converted
-            this.depthPixels = new byte[this.depthFrameDescription.Width * this.depthFrameDescription.Height];
+            this.depthPixels = new byte[kinectManager.Width * kinectManager.Height];
 
             // This is the image we'll show
             this.outBitmap = null;
@@ -93,36 +68,15 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             // this is the image we modify and copy at the end to outBitmap
             image = null;
 
-            // set IsAvailableChanged event notifier
-            this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
-
-            // open the sensor
-            this.kinectSensor.Open();
-
             // set the status text
-            this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
-                                                            : Properties.Resources.NoSensorStatusText;
+            // this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
+            //                                                 : Properties.Resources.NoSensorStatusText;
 
             // use the window object as the view model in this simple example
             this.DataContext = this;
 
             // initialize the components (controls) of the window
             this.InitializeComponent();
-
-            // Open the json file
-            var json = new StreamReader(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\50anios.json"));
-            JsonTextReader reader = new JsonTextReader(json);
-            while (reader.Read())
-            {
-                if (reader.Value != null)
-                {
-                    Debug.WriteLine("Token: {0}, Value: {1}", reader.TokenType, reader.Value);
-                }
-                else
-                {
-                    Debug.WriteLine("Token: {0}", reader.TokenType);
-                }
-            }
 
         }
 
@@ -251,51 +205,6 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         */
 
         /// <summary>
-        /// Handles the depth frame data arriving from the sensor
-        /// </summary>
-        /// <param name="sender">object sending the event</param>
-        /// <param name="e">event arguments</param>
-        private void Reader_FrameArrived(object sender, DepthFrameArrivedEventArgs e)
-        {
-            bool depthFrameProcessed = false;
-            
-            if (frameCount++ % 10 != 0)
-                return;
-                
-            using (DepthFrame depthFrame = e.FrameReference.AcquireFrame())
-            {
-                if (depthFrame != null)
-                {
-                    // the fastest way to process the body index data is to directly access 
-                    // the underlying buffer
-                    using (Microsoft.Kinect.KinectBuffer depthBuffer = depthFrame.LockImageBuffer())
-                    {
-                        // verify data and write the color data to the display bitmap
-                        if (((this.depthFrameDescription.Width * this.depthFrameDescription.Height) == (depthBuffer.Size / this.depthFrameDescription.BytesPerPixel)) 
-                        //    && (this.depthFrameDescription.Width == this.depthBitmap.PixelWidth) && (this.depthFrameDescription.Height == this.depthBitmap.PixelHeight)
-                            )
-                        {
-                            // Note: In order to see the full range of depth (including the less reliable far field depth)
-                            // we are setting maxDepth to the extreme potential depth threshold
-                            ushort maxDepth = ushort.MaxValue;
-
-                            // If you wish to filter by reliable depth distance, uncomment the following line:
-                            //// maxDepth = depthFrame.DepthMaxReliableDistance
-                            
-                            this.ProcessDepthFrameData(depthBuffer.UnderlyingBuffer, depthBuffer.Size, depthFrame.DepthMinReliableDistance, maxDepth);
-                            depthFrameProcessed = true;
-                        }
-                    }
-                }
-            }
-
-            if (depthFrameProcessed)
-            {
-                this.RenderDepthPixels();
-            }
-        }
-
-        /// <summary>
         /// Directly accesses the underlying image buffer of the DepthFrame to 
         /// create a displayable bitmap.
         /// This function requires the /unsafe compiler option as we make use of direct
@@ -415,6 +324,18 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             else
                 return Color.FromArgb(255, v, p, q);
         }
+
+        // Override the OnRender call to add a Background and Border to the OffSetPanel
+        protected override void OnRender(DrawingContext dc)
+        {
+            base.OnRender(dc);
+            if(kinectManager.hasDepthInfo() )
+            {
+                this.RenderDepthPixels();
+                kinectManager.depthInfoProcessed();
+            }
+        }
+
         /// <summary>
         /// Renders color pixels into the writeableBitmap.
         /// It now has to modify the pixels at the outBitmap based on the information at depthPixels
