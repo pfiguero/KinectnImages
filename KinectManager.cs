@@ -1,7 +1,5 @@
-﻿
-namespace Microsoft.Samples.Kinect.DepthBasics
+﻿namespace Pfiguero.Samples.ImageReel
 {
-
     using System;
     using Microsoft.Kinect;
 
@@ -79,6 +77,18 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             this.kinectSensor.Open();
 
 
+        }
+
+        /// <summary>
+        /// Handles the event which the sensor becomes unavailable (E.g. paused, closed, unplugged).
+        /// </summary>
+        /// <param name="sender">object sending the event</param>
+        /// <param name="e">event arguments</param>
+        private void Sensor_IsAvailableChanged(object sender, IsAvailableChangedEventArgs e)
+        {
+            // on failure, set the status text
+            //this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
+            //                                                : Properties.Resources.SensorNotAvailableStatusText;
         }
 
         /// <summary>
