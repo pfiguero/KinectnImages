@@ -126,6 +126,11 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Maximized;
+        }
+
         /// <summary>
         /// INotifyPropertyChangedPropertyChanged event to allow window controls to bind to changeable data
         /// </summary>
