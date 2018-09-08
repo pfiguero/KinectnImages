@@ -18,6 +18,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
     using Microsoft.Kinect;
     using Newtonsoft.Json;
 
+    public delegate void MyRefreshScreenHandler(object source, EventArgs e);
 
     /// <summary>
     /// Interaction logic for MainWindow
@@ -30,16 +31,9 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         private WriteableBitmap outBitmap = null;
 
         /// <summary>
-        /// this is the image we modify and copy at the end to outBitmap
-        /// </summary>
-        private BitmapFrame image = null;
-
-        private byte[] pixels = null;
-
-        /// <summary>
         /// Intermediate storage for frame data converted to color
         /// </summary>
-        private byte[] depthPixels = null;
+        //private byte[] depthPixels = null;
 
         /// <summary>
         /// Current status text to display
@@ -61,15 +55,13 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 imageManager = new ImageManager();
             }
 
+            kinectManager.OnRefresh += new MyRefreshScreenHandler(RefreshScreen);
 
             // allocate space to put the pixels being received and converted
-            this.depthPixels = new byte[kinectManager.Width * kinectManager.Height];
+            // this.depthPixels = new byte[kinectManager.Width * kinectManager.Height];
 
             // This is the image we'll show
             this.outBitmap = null;
-
-            // this is the image we modify and copy at the end to outBitmap
-            image = null;
 
             // set the status text
             // this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
@@ -109,11 +101,12 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
                     //StreamResourceInfo x = Application.GetRemoteStream(uri);
                     BitmapDecoder dec = BitmapDecoder.Create(uri, BitmapCreateOptions.None, BitmapCacheOption.Default);
-                    image = dec.Frames[0];
+                    kinectManager.SetImage( dec.Frames[0] );
                     //outBitmap = new WriteableBitmap(imageSource.Width,imageSource.Height,96,96,PixelFormats.Rgb24,BitmapPalettes.WebPalette)
 
                     // create the output stream of bytes. Assuming 4 bytes per pixel
-                    pixels = new byte[outBitmap.PixelWidth * outBitmap.PixelHeight * 4];
+                    //pixels = new byte[outBitmap.PixelWidth * outBitmap.PixelHeight * 4];
+                    kinectManager.SetPixels(outBitmap.PixelWidth * outBitmap.PixelHeight * 4);
                     //pixels = new byte[image.PixelWidth * image.PixelHeight * 4];
                 }
                 return outBitmap;
@@ -152,18 +145,9 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// <param name="e">event arguments</param>
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            if (this.depthFrameReader != null)
-            {
-                // DepthFrameReader is IDisposable
-                this.depthFrameReader.Dispose();
-                this.depthFrameReader = null;
-            }
-
-            if (this.kinectSensor != null)
-            {
-                this.kinectSensor.Close();
-                this.kinectSensor = null;
-            }
+            // do nothing... Can´t dispose yet, since the kinect is shared between the two windows
+            //kinectManager.Dispose();
+            //kinectManager = null;
         }
 
         /// <summary>
@@ -207,6 +191,134 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         }
         */
 
+        public void RefreshScreen(object source, EventArgs e)
+        {
+            this.RenderDepthPixels();
+        }
+
+        /// <summary>
+        /// Renders color pixels into the writeableBitmap.
+        /// It now has to modify the pixels at the outBitmap based on the information at depthPixels
+        /// It takes into account size differences between outBitmap and depthPixels
+        /// </summary>
+        private void RenderDepthPixels()
+        {            
+            this.outBitmap.WritePixels(
+                new Int32Rect(0, 0, this.outBitmap.PixelWidth, this.outBitmap.PixelHeight),
+                kinectManager.Pixels,
+                this.outBitmap.PixelWidth*4,
+                0);
+
+
+            //outBitmap.WritePixels(new Int32Rect(0, 0, image.PixelWidth, image.PixelHeight), pixels, image.PixelWidth * 4, 0);
+
+        }
+    }
+
+    public class KinectManager : IDisposable
+    {
+
+        public event MyRefreshScreenHandler OnRefresh;
+
+        /// <summary>
+        /// Map depth range to byte range
+        /// </summary>
+        private const int MapDepthToByte = 8000 / 256;
+
+        /// <summary>
+        /// Active Kinect sensor
+        /// </summary>
+        private KinectSensor kinectSensor = null;
+
+        /// <summary>
+        /// Reader for depth frames
+        /// </summary>
+        private DepthFrameReader depthFrameReader = null;
+
+        /// <summary>
+        /// Description of the data contained in the depth frame
+        /// </summary>
+        private FrameDescription depthFrameDescription = null;
+
+        private static int frameCount = 0;
+
+        /// <summary>
+        /// this is the image we modify and copy at the end to outBitmap
+        /// </summary>
+        private BitmapFrame image = null;
+
+        private byte[] pixels = null;
+
+        public int Width
+        {
+            get
+            {
+                return this.depthFrameDescription.Width;
+            }
+        }
+
+        public int Height
+        {
+            get
+            {
+                return this.depthFrameDescription.Height;
+            }
+        }
+        
+        public byte[] Pixels
+        {
+            get
+            {
+                return pixels;
+            }
+        }
+
+        public uint BytesPerPixel
+        {
+            get
+            {
+                return this.depthFrameDescription.BytesPerPixel;
+            }
+        }
+
+        public KinectManager()
+        {
+            // this is the image we modify and copy at the end to outBitmap
+            image = null;
+
+            // get the kinectSensor object
+            this.kinectSensor = KinectSensor.GetDefault();
+
+            // open the reader for the depth frames
+            this.depthFrameReader = this.kinectSensor.DepthFrameSource.OpenReader();
+
+            // wire handler for frame arrival
+            this.depthFrameReader.FrameArrived += this.Reader_FrameArrived;
+
+            // get FrameDescription from DepthFrameSource
+            this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
+
+            // set IsAvailableChanged event notifier
+            this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
+
+            // open the sensor
+            this.kinectSensor.Open();
+
+
+        }
+
+        /// <summary>
+        /// Handles the event which the sensor becomes unavailable (E.g. paused, closed, unplugged).
+        /// </summary>
+        /// <param name="sender">object sending the event</param>
+        /// <param name="e">event arguments</param>
+        private void Sensor_IsAvailableChanged(object sender, IsAvailableChangedEventArgs e)
+        {
+            // on failure, set the status text
+            //this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
+            //                                                : Properties.Resources.SensorNotAvailableStatusText;
+        }
+
         /// <summary>
         /// Directly accesses the underlying image buffer of the DepthFrame to 
         /// create a displayable bitmap.
@@ -225,23 +337,23 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             image.CopyPixels(pixels, image.PixelWidth * 4, 0);
 
             // modify the pixels, according to what is read from the Kinect
-            for (int i =0; i<pixels.Length/4; ++i )
+            for (int i = 0; i < pixels.Length / 4; ++i)
             {
                 // coordinates of the current pixel in the output image
                 int col = i % image.PixelWidth;
                 int row = i / image.PixelHeight;
 
                 // convert to the space of the Kinect image
-                int rE = (int) (((double)col * this.depthFrameDescription.Width) / ((double)image.PixelWidth));
-                int cE = (int) (((double)row * this.depthFrameDescription.Height) / ((double)image.PixelHeight ));
-                int iE = rE + cE * this.depthFrameDescription.Width; // * this.depthFrameDescription.BytesPerPixel;
+                int rE = (int)(((double)col * this.Width) / ((double)image.PixelWidth));
+                int cE = (int)(((double)row * this.Height) / ((double)image.PixelHeight));
+                int iE = rE + cE * this.Width; // * this.depthFrameDescription.BytesPerPixel;
 
                 ushort depth = 0;
-                if ( iE < (int)(depthFrameDataSize / this.depthFrameDescription.BytesPerPixel))
+                if (iE < (int)(depthFrameDataSize / this.BytesPerPixel))
                 {
                     depth = frameData[iE];
                 }
-                byte depthByte = (byte) (depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
+                byte depthByte = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
                 //Debug.WriteLine("iE: " + iE + "depth: " + depth + "depthByte" + depthByte );
 
                 byte b = pixels[i * 4];
@@ -252,8 +364,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 Color c = Color.FromArgb(a, r, g, b);
                 double hue, sat, val;
                 ColorToHSV(c, out hue, out sat, out val);
-                hue = ((double)depthByte/255d);
-                
+                hue = ((double)depthByte / 255d);
+
                 c = ColorFromHSV(hue, sat, val);
 
                 // grays
@@ -291,7 +403,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             // From https://stackoverflow.com/questions/23090019/fastest-formula-to-get-hue-from-rgb
             if (max == color.R)
                 hue = (color.G - color.B) / ((max - min) * 255d);
-            else if( max == color.G )
+            else if (max == color.G)
                 hue = 2.0 + (color.B - color.R) / ((max - min) * 255d);
             else
                 hue = 4.0 + (color.R - color.G) / ((max - min) * 255d);
@@ -328,123 +440,6 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 return Color.FromArgb(255, v, p, q);
         }
 
-        // Override the OnRender call to add a Background and Border to the OffSetPanel
-        protected override void OnRender(DrawingContext dc)
-        {
-            base.OnRender(dc);
-            if(kinectManager.hasDepthInfo() )
-            {
-                this.RenderDepthPixels();
-                kinectManager.depthInfoProcessed();
-            }
-        }
-
-        /// <summary>
-        /// Renders color pixels into the writeableBitmap.
-        /// It now has to modify the pixels at the outBitmap based on the information at depthPixels
-        /// It takes into account size differences between outBitmap and depthPixels
-        /// </summary>
-        private void RenderDepthPixels()
-        {            
-            this.outBitmap.WritePixels(
-                new Int32Rect(0, 0, this.outBitmap.PixelWidth, this.outBitmap.PixelHeight),
-                this.pixels,
-                this.outBitmap.PixelWidth*4,
-                0);
-
-
-            //outBitmap.WritePixels(new Int32Rect(0, 0, image.PixelWidth, image.PixelHeight), pixels, image.PixelWidth * 4, 0);
-
-        }
-    }
-
-        public class KinectManager
-    {
-        /// <summary>
-        /// Map depth range to byte range
-        /// </summary>
-        private const int MapDepthToByte = 8000 / 256;
-
-        /// <summary>
-        /// Active Kinect sensor
-        /// </summary>
-        private KinectSensor kinectSensor = null;
-
-        /// <summary>
-        /// Reader for depth frames
-        /// </summary>
-        private DepthFrameReader depthFrameReader = null;
-
-        /// <summary>
-        /// Description of the data contained in the depth frame
-        /// </summary>
-        private FrameDescription depthFrameDescription = null;
-
-        private static int frameCount = 0;
-
-        public int Width
-        {
-            get
-            {
-                return this.depthFrameDescription.Width;
-            }
-        }
-
-        public int Height
-        {
-            get
-            {
-                return this.depthFrameDescription.Height;
-            }
-        }
-
-        private bool _depthFrameProcessed = false;
-
-        public bool hasDepthInfo()
-        {
-            return this._depthFrameProcessed;
-        }
-
-        public void depthInfoProcessed()
-        {
-            this._depthFrameProcessed = false;
-        }
-
-
-        public KinectManager()
-        {
-            // get the kinectSensor object
-            this.kinectSensor = KinectSensor.GetDefault();
-
-            // open the reader for the depth frames
-            this.depthFrameReader = this.kinectSensor.DepthFrameSource.OpenReader();
-
-            // wire handler for frame arrival
-            this.depthFrameReader.FrameArrived += this.Reader_FrameArrived;
-
-            // get FrameDescription from DepthFrameSource
-            this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
-
-            // set IsAvailableChanged event notifier
-            this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
-
-            // open the sensor
-            this.kinectSensor.Open();
-
-
-        }
-
-        /// <summary>
-        /// Handles the event which the sensor becomes unavailable (E.g. paused, closed, unplugged).
-        /// </summary>
-        /// <param name="sender">object sending the event</param>
-        /// <param name="e">event arguments</param>
-        private void Sensor_IsAvailableChanged(object sender, IsAvailableChangedEventArgs e)
-        {
-            // on failure, set the status text
-            //this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
-            //                                                : Properties.Resources.SensorNotAvailableStatusText;
-        }
 
         /// <summary>
         /// Handles the depth frame data arriving from the sensor
@@ -453,6 +448,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// <param name="e">event arguments</param>
         private void Reader_FrameArrived(object sender, DepthFrameArrivedEventArgs e)
         {
+            bool depthFrameProcessed = false;
+
             if (frameCount++ % 10 != 0)
                 return;
 
@@ -477,19 +474,56 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                             //// maxDepth = depthFrame.DepthMaxReliableDistance
 
                             this.ProcessDepthFrameData(depthBuffer.UnderlyingBuffer, depthBuffer.Size, depthFrame.DepthMinReliableDistance, maxDepth);
-                            _depthFrameProcessed = true;
+                            depthFrameProcessed = true;
                         }
                     }
                 }
             }
 
-            if (depthFrameProcessed)
+            if(depthFrameProcessed)
             {
-                this.RenderDepthPixels();
+                OnRefresh(this, new EventArgs());
             }
         }
 
+    private bool disposed = false;
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (this.depthFrameReader != null)
+            {
+                // DepthFrameReader is IDisposable
+                this.depthFrameReader.Dispose();
+                this.depthFrameReader = null;
+            }
+
+            if (this.kinectSensor != null)
+            {
+                this.kinectSensor.Close();
+                this.kinectSensor = null;
+            }
+        }
+        //dispose unmanaged resources
+        disposed = true;
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+        public void SetImage(BitmapFrame bitmapFrame)
+        {
+            image = bitmapFrame;
+        }
+
+        public void SetPixels(int v)
+        {
+            pixels = new byte[v];
+        }
     }
 
     public class ImageManager
@@ -510,7 +544,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                     Debug.WriteLine("Token: {0}", reader.TokenType);
                 }
             }
-
+            json.Close();
         }
     }
 
