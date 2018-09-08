@@ -9,15 +9,16 @@ namespace Microsoft.Samples.Kinect.DepthBasics
     using System;
     using System.ComponentModel;
     using System.Diagnostics;
-    using System.Globalization;
     using System.IO;
     using System.Windows;
-    using System.Windows.Resources;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using Microsoft.Kinect;
     using Newtonsoft.Json;
 
+    /// <summary>
+    /// This event is triggered when new info from the kinect is available.
+    /// </summary>
     public delegate void MyRefreshScreenHandler(object source, EventArgs e);
 
     /// <summary>
@@ -29,16 +30,6 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// This is the image we'll show
         /// </summary>
         private WriteableBitmap outBitmap = null;
-
-        /// <summary>
-        /// Intermediate storage for frame data converted to color
-        /// </summary>
-        //private byte[] depthPixels = null;
-
-        /// <summary>
-        /// Current status text to display
-        /// </summary>
-        private string statusText = null;
 
         private static KinectManager kinectManager = null;
 
@@ -55,24 +46,17 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 imageManager = new ImageManager();
             }
 
+            // register the event handler
             kinectManager.OnRefresh += new MyRefreshScreenHandler(RefreshScreen);
-
-            // allocate space to put the pixels being received and converted
-            // this.depthPixels = new byte[kinectManager.Width * kinectManager.Height];
 
             // This is the image we'll show
             this.outBitmap = null;
-
-            // set the status text
-            // this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
-            //                                                 : Properties.Resources.NoSensorStatusText;
 
             // use the window object as the view model in this simple example
             this.DataContext = this;
 
             // initialize the components (controls) of the window
             this.InitializeComponent();
-
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -95,48 +79,22 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             {
                 if(outBitmap == null)
                 {
+                    // Background
                     Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\earth_tone_brown_blue_sky_mountain_nature_glacier-272202.jpg"));
                     ImageSource imageSource = new BitmapImage(uri);
                     outBitmap = new WriteableBitmap(imageSource as BitmapSource);
 
-                    //StreamResourceInfo x = Application.GetRemoteStream(uri);
+                    // The kinect writes the resulting image here
                     BitmapDecoder dec = BitmapDecoder.Create(uri, BitmapCreateOptions.None, BitmapCacheOption.Default);
                     kinectManager.SetImage( dec.Frames[0] );
-                    //outBitmap = new WriteableBitmap(imageSource.Width,imageSource.Height,96,96,PixelFormats.Rgb24,BitmapPalettes.WebPalette)
 
                     // create the output stream of bytes. Assuming 4 bytes per pixel
-                    //pixels = new byte[outBitmap.PixelWidth * outBitmap.PixelHeight * 4];
                     kinectManager.SetPixels(outBitmap.PixelWidth * outBitmap.PixelHeight * 4);
-                    //pixels = new byte[image.PixelWidth * image.PixelHeight * 4];
                 }
                 return outBitmap;
             }
         }
         
-        /// <summary>
-        /// Gets or sets the current status text to display
-        /// </summary>
-        public string StatusText
-        {
-            get
-            {
-                return this.statusText;
-            }
-
-            set
-            {
-                if (this.statusText != value)
-                {
-                    this.statusText = value;
-
-                    // notify any bound elements that the text has changed
-                    if (this.PropertyChanged != null)
-                    {
-                        this.PropertyChanged(this, new PropertyChangedEventArgs("StatusText"));
-                    }
-                }
-            }
-        }
 
         /// <summary>
         /// Execute shutdown tasks
@@ -146,50 +104,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
             // do nothing... Can´t dispose yet, since the kinect is shared between the two windows
-            //kinectManager.Dispose();
-            //kinectManager = null;
         }
-
-        /// <summary>
-        /// Handles the user clicking on the screenshot button
-        /// </summary>
-        /// <param name="sender">object sending the event</param>
-        /// <param name="e">event arguments</param>
-        /*
-        private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.depthBitmap != null)
-            {
-                // create a png bitmap encoder which knows how to save a .png file
-                BitmapEncoder encoder = new PngBitmapEncoder();
-
-                // create frame from the writable bitmap and add to encoder
-                encoder.Frames.Add(BitmapFrame.Create(this.depthBitmap));
-
-                string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
-
-                string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-
-                string path = Path.Combine(myPhotos, "KinectScreenshot-Depth-" + time + ".png");
-
-                // write the new file to disk
-                try
-                {
-                    // FileStream is IDisposable
-                    using (FileStream fs = new FileStream(path, FileMode.Create))
-                    {
-                        encoder.Save(fs);
-                    }
-
-                    this.StatusText = string.Format(CultureInfo.CurrentCulture, Properties.Resources.SavedScreenshotStatusTextFormat, path);
-                }
-                catch (IOException)
-                {
-                    this.StatusText = string.Format(CultureInfo.CurrentCulture, Properties.Resources.FailedScreenshotStatusTextFormat, path);
-                }
-            }
-        }
-        */
 
         public void RefreshScreen(object source, EventArgs e)
         {
@@ -208,10 +123,6 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 kinectManager.Pixels,
                 this.outBitmap.PixelWidth*4,
                 0);
-
-
-            //outBitmap.WritePixels(new Int32Rect(0, 0, image.PixelWidth, image.PixelHeight), pixels, image.PixelWidth * 4, 0);
-
         }
     }
 
@@ -299,24 +210,12 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
 
             // set IsAvailableChanged event notifier
-            this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
+            // this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
 
             // open the sensor
             this.kinectSensor.Open();
 
 
-        }
-
-        /// <summary>
-        /// Handles the event which the sensor becomes unavailable (E.g. paused, closed, unplugged).
-        /// </summary>
-        /// <param name="sender">object sending the event</param>
-        /// <param name="e">event arguments</param>
-        private void Sensor_IsAvailableChanged(object sender, IsAvailableChangedEventArgs e)
-        {
-            // on failure, set the status text
-            //this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
-            //                                                : Properties.Resources.SensorNotAvailableStatusText;
         }
 
         /// <summary>
@@ -364,33 +263,22 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 Color c = Color.FromArgb(a, r, g, b);
                 double hue, sat, val;
                 ColorToHSV(c, out hue, out sat, out val);
-                hue = ((double)depthByte / 255d);
+                hue = ((double)depthByte / 255d) + hue;
 
                 c = ColorFromHSV(hue, sat, val);
 
+                // colors
+                pixels[i * 4] = c.B;
+                pixels[i * 4 + 1] = c.G;
+                pixels[i * 4 + 2] = c.R;
+                pixels[i * 4 + 3] = c.A;
+
                 // grays
-                pixels[i * 4] = depthByte;
-                pixels[i * 4 + 1] = depthByte;
-                pixels[i * 4 + 2] = depthByte;
-                pixels[i * 4 + 3] = 255;
+                //pixels[i * 4] = depthByte;
+                //pixels[i * 4 + 1] = depthByte;
+                //pixels[i * 4 + 2] = depthByte;
+                //pixels[i * 4 + 3] = 255;
             }
-
-            //outBitmap.WritePixels(new Int32Rect(0, 0, image.PixelWidth, image.PixelHeight), pixels, image.PixelWidth * 4, 0);
-
-            /*
-            
-           
-            // convert depth to a visual representation
-            for (int i = 0; i < (int)(depthFrameDataSize / this.depthFrameDescription.BytesPerPixel); ++i)
-            {
-                // Get the depth for this pixel
-                ushort depth = frameData[i];
-
-                // To convert to a byte, we're mapping the depth value to the byte range.
-                // Values outside the reliable depth range are mapped to 0 (black).
-                this.depthPixels[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
-            }
-            */
         }
 
 

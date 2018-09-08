@@ -7,6 +7,7 @@
 namespace Microsoft.Samples.Kinect.DepthBasics
 {
     using System;
+    using System.Diagnostics;
     using System.Windows;
 
     /// <summary>
@@ -14,7 +15,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
     /// </summary>
     public partial class App : Application
     {
-        // From https://social.msdn.microsoft.com/Forums/vstudio/en-US/5d181304-8952-4663-8c3c-dc4d986aa8dd/dual-screen-application-and-wpf?forum=wpf
+        // Excerpts from https://social.msdn.microsoft.com/Forums/vstudio/en-US/5d181304-8952-4663-8c3c-dc4d986aa8dd/dual-screen-application-and-wpf?forum=wpf
         // and https://stackoverflow.com/questions/2704887/is-there-a-wpf-equaivalent-to-system-windows-forms-screen
         protected override void OnStartup(StartupEventArgs e)
         {
