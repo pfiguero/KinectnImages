@@ -1,7 +1,21 @@
 ﻿{
   "directory": "50anios",
   "images": [
-    {"filename": "001-26.jpg", "title": "El W"},
-    {"filename": "001-169.jpg", "title": "Francisco Rueda"}
+    {
+      "filename": "001-26.jpg",
+      "title": "Bloque W. Facultad de Ingeniería"
+    },
+    {
+      "filename": "001-169.jpg",
+      "title": "Francisco Rueda"
+    },
+    {
+      "filename": "002-22.jpg",
+      "title": "Bloque W. Facultad de Ingeniería"
+    },
+    {
+      "filename": "002-97.jpg",
+      "title": "Joaquín Oramas, Director del Centro de Computo"
+    }
   ]
 }

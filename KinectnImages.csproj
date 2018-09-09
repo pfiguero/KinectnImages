@@ -157,7 +157,9 @@
   <ItemGroup>
     <None Include="data\50anios.json" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="data\Creative_Commons_-_Slide2.jpg" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\50anios\001-26.jpg" />
   </ItemGroup>

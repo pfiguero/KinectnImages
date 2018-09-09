@@ -11,6 +11,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
     using System.Diagnostics;
     using System.IO;
     using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Shapes;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using Microsoft.Kinect;
@@ -35,11 +37,15 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
         private static ImageManager imageManager = null;
 
+        private int initDelta = 0;
+
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
-        public MainWindow()
+        public MainWindow( int iDelta )
         {
+            initDelta = iDelta;
+
             if( kinectManager == null || imageManager== null  )
             {
                 kinectManager = new KinectManager();
@@ -57,6 +63,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
             // initialize the components (controls) of the window
             this.InitializeComponent();
+
+            //canvas = new Canvas();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -80,7 +88,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 if(outBitmap == null)
                 {
                     // Background
-                    Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\earth_tone_brown_blue_sky_mountain_nature_glacier-272202.jpg"));
+                    Uri uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\Creative_Commons_-_Slide2.jpg"));
                     ImageSource imageSource = new BitmapImage(uri);
                     outBitmap = new WriteableBitmap(imageSource as BitmapSource);
 
@@ -117,12 +125,38 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// It takes into account size differences between outBitmap and depthPixels
         /// </summary>
         private void RenderDepthPixels()
-        {            
+        {
             this.outBitmap.WritePixels(
                 new Int32Rect(0, 0, this.outBitmap.PixelWidth, this.outBitmap.PixelHeight),
                 kinectManager.Pixels,
-                this.outBitmap.PixelWidth*4,
+                this.outBitmap.PixelWidth * 4,
                 0);
+            this.DrawImages();
+        }
+
+        private void DrawImages()
+        {
+            int screenWidth = 1280;
+            for(int i=0; i< imageManager.reel.Length; i++)
+            {
+                int imgStart = imageManager.reel[i].xPos;
+                int imgEnd = (int) (imageManager.reel[i].xPos + imageManager.reel[i].image.Width);
+                if( !(imgStart > initDelta + screenWidth || imgEnd < initDelta) )
+                {
+                    Rectangle rect = new Rectangle()
+                    {
+                        Width = imageManager.reel[i].image.Width,
+                        Height = imageManager.reel[i].image.Height
+                    };
+                    ImageBrush ib = new ImageBrush();
+                    ib.ImageSource = imageManager.reel[i].image;
+                    rect.Fill = ib;
+
+                    canvas.Children.Add(rect);
+                    Canvas.SetTop(rect, imageManager.reel[i].yPos);
+                    Canvas.SetLeft(rect, imageManager.reel[i].xPos - initDelta);
+                }
+            }
         }
     }
 
@@ -416,24 +450,73 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
     public class ImageManager
     {
+        struct ImageInfo
+        {
+            public String filename;
+            public String title;
+        }
+        struct MyFile
+        {
+            public String directory;
+            public ImageInfo[] images;
+        }
+
+        public struct InfoReel
+        {
+            public ImageSource image;
+            public int xPos;
+            public int yPos;
+        }
+
+        public InfoReel[] reel = null;
+
+        private void WriteTestData()
+        {
+            // MyFile f = { "dir1", { { "f1", "t1" }, { "f2", "t2" } } };
+            MyFile f = new MyFile();
+            f.directory = "dir1";
+            f.images = new ImageInfo[2];
+            f.images[0] = new ImageInfo();
+            f.images[0].filename = "f1";
+            f.images[0].title = "i1";
+            f.images[1] = new ImageInfo();
+            f.images[1].filename = "f1";
+            f.images[1].title = "i1";
+
+            String s = JsonConvert.SerializeObject(f);
+            Debug.WriteLine("@@@ " + s);
+        }
+
         public ImageManager()
         {
-            // Open the json file
-            var json = new StreamReader(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\50anios.json"));
-            JsonTextReader reader = new JsonTextReader(json);
-            while (reader.Read())
+            //// Background
+            //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\Creative_Commons_-_Slide2.jpg"));
+            //ImageSource imageSource = new BitmapImage(uri);
+            // Open the json file and de serialize it
+            MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\50anios.json")));
+
+            reel = new InfoReel[f.images.Length];
+            Uri uri;
+            for (int i=0; i<reel.Length; i++)
             {
-                if (reader.Value != null)
-                {
-                    Debug.WriteLine("Token: {0}, Value: {1}", reader.TokenType, reader.Value);
-                }
-                else
-                {
-                    Debug.WriteLine("Token: {0}", reader.TokenType);
-                }
+                String s = @"..\..\..\images\" + f.directory + "\\" + f.images[i].filename;
+                uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
+                reel[i].image = new BitmapImage(uri);
+                Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
-            json.Close();
+
+            // Define positions in the reel...
+            int marginX = 30;
+            int screenHeight = 720;
+            reel[0].xPos = marginX;
+            reel[0].yPos = (int) (screenHeight - reel[0].image.Height) / 2;
+            for(int i=1; i< reel.Length; i++)
+            {
+                reel[i].xPos = (int) (reel[i-1].xPos + reel[i-1].image.Width + marginX);
+                reel[i].yPos = (int) (screenHeight - reel[i].image.Height) / 2;
+            }
         }
+        //'C:\Users\COLIVRI\Documents\KinectnImages\images\50anios\002-22.jpg'.'
     }
 
 

@@ -20,8 +20,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            MainWindow w1 = new MainWindow();
-            MainWindow w2 = new MainWindow();
+            MainWindow w1 = new MainWindow(0);
+            MainWindow w2 = new MainWindow(1280);
 
             w1.Top = SystemParameters.VirtualScreenTop;
             w1.Left = SystemParameters.VirtualScreenLeft;
