@@ -92,7 +92,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 if(outBitmap == null)
                 {
                     // Background
-                    Uri uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\Creative_Commons_-_Slide2.jpg"));
+                    Uri uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
                     ImageSource imageSource = new BitmapImage(uri);
                     outBitmap = new WriteableBitmap(imageSource as BitmapSource);
 
@@ -356,10 +356,10 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 c = ColorFromHSV(hue, sat, val);
 
                 // colors
-                pixels[i * 4] = c.B;
-                pixels[i * 4 + 1] = c.G;
-                pixels[i * 4 + 2] = c.R;
-                pixels[i * 4 + 3] = c.A;
+                //pixels[i * 4] = c.B;
+                //pixels[i * 4 + 1] = c.G;
+                //pixels[i * 4 + 2] = c.R;
+                //pixels[i * 4 + 3] = c.A;
 
                 // grays
                 //pixels[i * 4] = depthByte;
@@ -546,7 +546,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         public ImageManager()
         {
             //// Background
-            //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\Creative_Commons_-_Slide2.jpg"));
+            //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
             //ImageSource imageSource = new BitmapImage(uri);
             // Open the json file and de serialize it
             MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\50anios.json")));
