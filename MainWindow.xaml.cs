@@ -39,6 +39,10 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
         private int initDelta = 0;
 
+        private Rectangle[] rects = null;
+
+        private int[] xPosRects = null;
+
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
@@ -64,7 +68,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             // initialize the components (controls) of the window
             this.InitializeComponent();
 
-            //canvas = new Canvas();
+            CreateRects();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -134,7 +138,56 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             this.DrawImages();
         }
 
+        private void CreateRects()
+        {
+            int screenWidth = 1280;
+            rects = new Rectangle[imageManager.reel.Length];
+            xPosRects = new int[imageManager.reel.Length];
+            for (int i = 0; i < imageManager.reel.Length; i++)
+            {
+                int imgStart = imageManager.reel[i].xPos;
+                int imgEnd = (int)(imageManager.reel[i].xPos + imageManager.reel[i].image.Width);
+                rects[i] = new Rectangle()
+                {
+                    Width = imageManager.reel[i].image.Width,
+                    Height = imageManager.reel[i].image.Height
+                };
+                ImageBrush ib = new ImageBrush();
+                ib.ImageSource = imageManager.reel[i].image;
+                rects[i].Fill = ib;
+
+                canvas.Children.Add(rects[i]);
+                Canvas.SetTop(rects[i], imageManager.reel[i].yPos);
+                xPosRects[i] = imageManager.reel[i].xPos - initDelta;
+                Canvas.SetLeft(rects[i], xPosRects[i]);
+            }
+        }
+
+        private static int howMuch = 10;
+
         private void DrawImages()
+        {
+            for (int i = 0; i < imageManager.reel.Length; i++)
+            {
+                //int x = xPosRects[i] - howMuch;
+                //if (x + imageManager.reel[i].image.Width < 0)
+                //    x = imageManager.LastPos + 30; // margin!!! Unify!!!
+                xPosRects[i] -= howMuch;
+                if (xPosRects[i] + imageManager.reel[i].image.Width < 0)
+                {
+                    int last = i - 1;
+                    if (last < 0)
+                        last = imageManager.reel.Length-1;
+                    xPosRects[i] = (int)(xPosRects[last] + imageManager.reel[last].image.Width + 30); // margin!!! Unify!!!
+                }
+                Canvas.SetLeft(rects[i], xPosRects[i]);
+            }
+            //howMuch += 10;
+            //if (howMuch > 2560)
+            //    howMuch -= 2560;
+        }
+
+        private void DrawImagesOLD()
         {
             int screenWidth = 1280;
             for(int i=0; i< imageManager.reel.Length; i++)
@@ -157,6 +210,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                     Canvas.SetLeft(rect, imageManager.reel[i].xPos - initDelta);
                 }
             }
+            initDelta += 10;
         }
     }
 
@@ -470,6 +524,8 @@ namespace Microsoft.Samples.Kinect.DepthBasics
 
         public InfoReel[] reel = null;
 
+        public int LastPos { get; }
+
         private void WriteTestData()
         {
             // MyFile f = { "dir1", { { "f1", "t1" }, { "f2", "t2" } } };
@@ -515,6 +571,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 reel[i].xPos = (int) (reel[i-1].xPos + reel[i-1].image.Width + marginX);
                 reel[i].yPos = (int) (screenHeight - reel[i].image.Height) / 2;
             }
+            LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
         }
         //'C:\Users\COLIVRI\Documents\KinectnImages\images\50anios\002-22.jpg'.'
     }
