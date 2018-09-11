@@ -118,6 +118,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             // do nothing... Can´t dispose yet, since the kinect is shared between the two windows
         }
 
+
         public void RefreshScreen(object source, EventArgs e)
         {
             this.RenderDepthPixels();
@@ -163,8 +164,6 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             }
         }
 
-        private static int howMuch = 10;
-
         private void DrawImages()
         {
             for (int i = 0; i < imageManager.reel.Length; i++)
@@ -172,7 +171,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 //int x = xPosRects[i] - howMuch;
                 //if (x + imageManager.reel[i].image.Width < 0)
                 //    x = imageManager.LastPos + 30; // margin!!! Unify!!!
-                xPosRects[i] -= howMuch;
+                xPosRects[i] -= kinectManager.HowMuch;
                 if (xPosRects[i] + imageManager.reel[i].image.Width < 0)
                 {
                     int last = i - 1;
@@ -280,6 +279,10 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             }
         }
 
+        private int _howMuch = 100;
+
+        public int HowMuch { get { return _howMuch; } }
+
         public KinectManager()
         {
             // this is the image we modify and copy at the end to outBitmap
@@ -303,7 +306,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             // open the sensor
             this.kinectSensor.Open();
 
-
+            _howMuch = 100;
         }
 
         /// <summary>
@@ -316,7 +319,7 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// <param name="depthFrameDataSize">Size of the DepthFrame image data</param>
         /// <param name="minDepth">The minimum reliable depth value for the frame</param>
         /// <param name="maxDepth">The maximum reliable depth value for the frame</param>
-        private unsafe void ProcessDepthFrameData(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
+        private unsafe void ProcessDepthFrameDataOLD(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
         {
             // depth frame data is a 16 bit value
             ushort* frameData = (ushort*)depthFrameData;
@@ -366,6 +369,54 @@ namespace Microsoft.Samples.Kinect.DepthBasics
                 //pixels[i * 4 + 1] = depthByte;
                 //pixels[i * 4 + 2] = depthByte;
                 //pixels[i * 4 + 3] = 255;
+            }
+        }
+
+        public double val = 0;
+        public double stdDev = 20000; // from a small sample...
+        public int nVal = 0;
+
+
+        private unsafe void ProcessDepthFrameData(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
+        {
+            // depth frame data is a 16 bit value
+            ushort* frameData = (ushort*)depthFrameData;
+
+            image.CopyPixels(pixels, image.PixelWidth * 4, 0);
+
+            // The sum of a row is an indication of what is in front...
+            int r = this.Width / 2;
+            uint sum = 0;
+            for (int c = 0; c < this.Height; c++)
+            {
+                int i = r + c * this.Width; // * this.depthFrameDescription.BytesPerPixel;
+                ushort depth = 0;
+                if (i < (int)(depthFrameDataSize / this.BytesPerPixel))
+                {
+                    depth = frameData[i];
+                }
+                sum += depth;
+            }
+            // Debug.WriteLine("SUM: " + sum);
+            // sample of the 1st 10 values... Assuming nobody is in front...
+            if ( nVal < 10 )
+            { 
+                nVal++;
+                val += sum;
+            }
+            else if( nVal == 10 )
+            {
+                //stdDev = 0.1; // Math.Sqrt((nVal)/nVal);
+                val /= nVal;
+                Debug.WriteLine("VAL PROM: " + val);
+                nVal++; // just to put it outside this loop
+            }
+            else
+            {
+                if( Math.Abs(val-sum) > stdDev )
+                {
+                    _howMuch = 10;
+                }
             }
         }
 
@@ -459,6 +510,9 @@ namespace Microsoft.Samples.Kinect.DepthBasics
             if(depthFrameProcessed)
             {
                 OnRefresh(this, new EventArgs());
+                _howMuch = _howMuch >= 100 ? _howMuch : _howMuch + 1;
+                // Debug.WriteLine("How Much: " + _howMuch);
+
             }
         }
 
