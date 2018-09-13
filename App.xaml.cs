@@ -1,10 +1,10 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="App.xaml.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// <copyright file="App.xaml.cs" company="Pfiguero">
+//     GPL
 // </copyright>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Samples.Kinect.DepthBasics
+namespace Pfiguero.Samples.ImageReel
 {
     using System;
     using System.Diagnostics;
@@ -20,8 +20,14 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            MainWindow w1 = new MainWindow(0);
-            MainWindow w2 = new MainWindow(1280);
+            KinectManager kinectManager = new KinectManager();
+
+            MainWindow w1 = new MainWindow(0, kinectManager);
+            MainWindow w2 = new MainWindow(1280, kinectManager);
+
+            // register the event handler
+            kinectManager.OnRefresh += new MyRefreshScreenHandler(w1.RefreshScreen);
+            kinectManager.OnRefresh += new MyRefreshScreenHandler(w2.RefreshScreen);
 
             w1.Top = SystemParameters.VirtualScreenTop;
             w1.Left = SystemParameters.VirtualScreenLeft;

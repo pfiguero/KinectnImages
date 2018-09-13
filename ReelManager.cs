@@ -1,4 +1,10 @@
-﻿namespace Pfiguero.Samples.ImageReel
+﻿//------------------------------------------------------------------------------
+// <copyright file="App.xaml.cs" company="Pfiguero">
+//     GPL
+// </copyright>
+//------------------------------------------------------------------------------
+
+namespace Pfiguero.Samples.ImageReel
 {
     using System;
     using System.Diagnostics;
@@ -7,19 +13,21 @@
     using System.Windows.Media.Imaging;
     using Newtonsoft.Json;
 
-    public class ImageManager
+    public class ReelManager
     {
-        struct ImageInfo
-        {
-            public String filename;
-            public String title;
-        }
+        // Input structure from the file
         struct MyFile
         {
             public String directory;
             public ImageInfo[] images;
         }
+        struct ImageInfo
+        {
+            public String filename;
+            public String title;
+        }
 
+        // Computed info from the input structure
         public struct InfoReel
         {
             public ImageSource image;
@@ -48,7 +56,7 @@
             Debug.WriteLine("@@@ " + s);
         }
 
-        public ImageManager()
+        public ReelManager()
         {
             //// Background
             //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
@@ -78,7 +86,6 @@
             }
             LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
         }
-        //'C:\Users\COLIVRI\Documents\KinectnImages\images\50anios\002-22.jpg'.'
     }
 
 }

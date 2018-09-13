@@ -1,7 +1,14 @@
-﻿namespace Pfiguero.Samples.ImageReel
+﻿//------------------------------------------------------------------------------
+// <copyright file="App.xaml.cs" company="Pfiguero">
+//     GPL
+// </copyright>
+//------------------------------------------------------------------------------
+
+namespace Pfiguero.Samples.ImageReel
 {
     using System;
     using System.Diagnostics;
+    using System.Windows;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using Microsoft.Kinect;
@@ -11,10 +18,23 @@
     /// </summary>
     public delegate void MyRefreshScreenHandler(object source, EventArgs e);
 
-    public class KinectManager : IDisposable
+    public interface IGetImage
+    {
+        WriteableBitmap GetImage();
+        void RefreshImage();
+        int HowMuch { get; }
+    }
+
+
+    public class KinectManager : IDisposable, IGetImage
     {
 
         public event MyRefreshScreenHandler OnRefresh;
+
+        /// <summary>
+        /// This is the image we'll show
+        /// </summary>
+        private WriteableBitmap outBitmap = null;
 
         /// <summary>
         /// Map depth range to byte range
@@ -61,6 +81,34 @@
             }
         }
 
+        public WriteableBitmap GetImage()
+        {
+            if (outBitmap == null)
+            {
+                // Background
+                Uri uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
+                ImageSource imageSource = new BitmapImage(uri);
+                outBitmap = new WriteableBitmap(imageSource as BitmapSource);
+
+                // The kinect writes the resulting image here
+                BitmapDecoder dec = BitmapDecoder.Create(uri, BitmapCreateOptions.None, BitmapCacheOption.Default);
+                this.SetImage(dec.Frames[0]);
+
+                // create the output stream of bytes. Assuming 4 bytes per pixel
+                this.SetPixels(outBitmap.PixelWidth * outBitmap.PixelHeight * 4);
+            }
+            return outBitmap;
+        }
+
+        public void RefreshImage()
+        {
+            this.outBitmap.WritePixels(
+                new Int32Rect(0, 0, this.outBitmap.PixelWidth, this.outBitmap.PixelHeight),
+                this.Pixels,
+                this.outBitmap.PixelWidth * 4, 0);
+        }
+
+
         public byte[] Pixels
         {
             get
@@ -100,6 +148,9 @@
 
             // open the sensor
             this.kinectSensor.Open();
+
+            // This is the image we'll show
+            this.outBitmap = null;
 
             _howMuch = 100;
         }

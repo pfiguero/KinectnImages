@@ -1,10 +1,10 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="MainWindow.xaml.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// <copyright file="App.xaml.cs" company="Pfiguero">
+//     GPL
 // </copyright>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Samples.Kinect.DepthBasics
+namespace Pfiguero.Samples.ImageReel
 {
     using System;
     using System.ComponentModel;
@@ -20,14 +20,10 @@ namespace Microsoft.Samples.Kinect.DepthBasics
     /// </summary>
     public partial class MainWindow : Window
     {
-        /// <summary>
-        /// This is the image we'll show
-        /// </summary>
-        private WriteableBitmap outBitmap = null;
 
-        private static KinectManager kinectManager = null;
+        private IGetImage kinectManager = null;
 
-        private static ImageManager imageManager = null;
+        private static ReelManager reelManager = null;
 
         private int initDelta = 0;
 
@@ -38,21 +34,15 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
-        public MainWindow( int iDelta )
+        public MainWindow( int iDelta, IGetImage k)
         {
             initDelta = iDelta;
 
-            if( kinectManager == null || imageManager== null  )
+            if( kinectManager == null || reelManager== null  )
             {
-                kinectManager = new KinectManager();
-                imageManager = new ImageManager();
+                kinectManager = k;
+                reelManager = new ReelManager();
             }
-
-            // register the event handler
-            kinectManager.OnRefresh += new MyRefreshScreenHandler(RefreshScreen);
-
-            // This is the image we'll show
-            this.outBitmap = null;
 
             // use the window object as the view model in this simple example
             this.DataContext = this;
@@ -71,29 +61,9 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// <summary>
         /// Gets the bitmap to display
         /// </summary>
-        
-        public ImageSource ImageSource
-        {
-            get
-            {
-                if(outBitmap == null)
-                {
-                    // Background
-                    Uri uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
-                    ImageSource imageSource = new BitmapImage(uri);
-                    outBitmap = new WriteableBitmap(imageSource as BitmapSource);
 
-                    // The kinect writes the resulting image here
-                    BitmapDecoder dec = BitmapDecoder.Create(uri, BitmapCreateOptions.None, BitmapCacheOption.Default);
-                    kinectManager.SetImage( dec.Frames[0] );
+        public ImageSource ImageSource => kinectManager.GetImage();
 
-                    // create the output stream of bytes. Assuming 4 bytes per pixel
-                    kinectManager.SetPixels(outBitmap.PixelWidth * outBitmap.PixelHeight * 4);
-                }
-                return outBitmap;
-            }
-        }
-        
 
         /// <summary>
         /// Execute shutdown tasks
@@ -118,53 +88,49 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         /// </summary>
         private void RenderDepthPixels()
         {
-            this.outBitmap.WritePixels(
-                new Int32Rect(0, 0, this.outBitmap.PixelWidth, this.outBitmap.PixelHeight),
-                kinectManager.Pixels,
-                this.outBitmap.PixelWidth * 4,
-                0);
+            kinectManager.RefreshImage();
             this.DrawImages();
         }
 
         private void CreateRects()
         {
             int screenWidth = 1280;
-            rects = new Rectangle[imageManager.reel.Length];
-            xPosRects = new int[imageManager.reel.Length];
-            for (int i = 0; i < imageManager.reel.Length; i++)
+            rects = new Rectangle[reelManager.reel.Length];
+            xPosRects = new int[reelManager.reel.Length];
+            for (int i = 0; i < reelManager.reel.Length; i++)
             {
-                int imgStart = imageManager.reel[i].xPos;
-                int imgEnd = (int)(imageManager.reel[i].xPos + imageManager.reel[i].image.Width);
+                int imgStart = reelManager.reel[i].xPos;
+                int imgEnd = (int)(reelManager.reel[i].xPos + reelManager.reel[i].image.Width);
                 rects[i] = new Rectangle()
                 {
-                    Width = imageManager.reel[i].image.Width,
-                    Height = imageManager.reel[i].image.Height
+                    Width = reelManager.reel[i].image.Width,
+                    Height = reelManager.reel[i].image.Height
                 };
                 ImageBrush ib = new ImageBrush();
-                ib.ImageSource = imageManager.reel[i].image;
+                ib.ImageSource = reelManager.reel[i].image;
                 rects[i].Fill = ib;
 
                 canvas.Children.Add(rects[i]);
-                Canvas.SetTop(rects[i], imageManager.reel[i].yPos);
-                xPosRects[i] = imageManager.reel[i].xPos - initDelta;
+                Canvas.SetTop(rects[i], reelManager.reel[i].yPos);
+                xPosRects[i] = reelManager.reel[i].xPos - initDelta;
                 Canvas.SetLeft(rects[i], xPosRects[i]);
             }
         }
 
         private void DrawImages()
         {
-            for (int i = 0; i < imageManager.reel.Length; i++)
+            for (int i = 0; i < reelManager.reel.Length; i++)
             {
                 //int x = xPosRects[i] - howMuch;
-                //if (x + imageManager.reel[i].image.Width < 0)
-                //    x = imageManager.LastPos + 30; // margin!!! Unify!!!
+                //if (x + reelManager.reel[i].image.Width < 0)
+                //    x = reelManager.LastPos + 30; // margin!!! Unify!!!
                 xPosRects[i] -= kinectManager.HowMuch;
-                if (xPosRects[i] + imageManager.reel[i].image.Width < 0)
+                if (xPosRects[i] + reelManager.reel[i].image.Width < 0)
                 {
                     int last = i - 1;
                     if (last < 0)
-                        last = imageManager.reel.Length-1;
-                    xPosRects[i] = (int)(xPosRects[last] + imageManager.reel[last].image.Width + 30); // margin!!! Unify!!!
+                        last = reelManager.reel.Length-1;
+                    xPosRects[i] = (int)(xPosRects[last] + reelManager.reel[last].image.Width + 30); // margin!!! Unify!!!
                 }
                 Canvas.SetLeft(rects[i], xPosRects[i]);
             }
@@ -176,24 +142,24 @@ namespace Microsoft.Samples.Kinect.DepthBasics
         private void DrawImagesOLD()
         {
             int screenWidth = 1280;
-            for(int i=0; i< imageManager.reel.Length; i++)
+            for(int i=0; i< reelManager.reel.Length; i++)
             {
-                int imgStart = imageManager.reel[i].xPos;
-                int imgEnd = (int) (imageManager.reel[i].xPos + imageManager.reel[i].image.Width);
+                int imgStart = reelManager.reel[i].xPos;
+                int imgEnd = (int) (reelManager.reel[i].xPos + reelManager.reel[i].image.Width);
                 if( !(imgStart > initDelta + screenWidth || imgEnd < initDelta) )
                 {
                     Rectangle rect = new Rectangle()
                     {
-                        Width = imageManager.reel[i].image.Width,
-                        Height = imageManager.reel[i].image.Height
+                        Width = reelManager.reel[i].image.Width,
+                        Height = reelManager.reel[i].image.Height
                     };
                     ImageBrush ib = new ImageBrush();
-                    ib.ImageSource = imageManager.reel[i].image;
+                    ib.ImageSource = reelManager.reel[i].image;
                     rect.Fill = ib;
 
                     canvas.Children.Add(rect);
-                    Canvas.SetTop(rect, imageManager.reel[i].yPos);
-                    Canvas.SetLeft(rect, imageManager.reel[i].xPos - initDelta);
+                    Canvas.SetTop(rect, reelManager.reel[i].yPos);
+                    Canvas.SetLeft(rect, reelManager.reel[i].xPos - initDelta);
                 }
             }
             initDelta += 10;
