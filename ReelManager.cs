@@ -9,6 +9,8 @@ namespace Pfiguero.Samples.ImageReel
     using System;
     using System.Diagnostics;
     using System.IO;
+    using System.Windows.Shapes;
+    using System.Windows.Controls;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using Newtonsoft.Json;
@@ -36,6 +38,11 @@ namespace Pfiguero.Samples.ImageReel
         }
 
         public InfoReel[] reel = null;
+
+        private Rectangle[] rects = null;
+
+        private int[] xPosRects = null;
+
 
         public int LastPos { get; }
 
@@ -86,6 +93,94 @@ namespace Pfiguero.Samples.ImageReel
             }
             LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
         }
+
+        public void CreateRects(Canvas canvas, int initDelta)
+        {
+            int screenWidth = 1280;
+            if(rects == null)
+            {
+                rects = new Rectangle[this.reel.Length];
+                xPosRects = new int[this.reel.Length];
+                for (int i = 0; i < this.reel.Length; i++)
+                {
+                    int imgStart = this.reel[i].xPos;
+                    int imgEnd = (int)(this.reel[i].xPos + this.reel[i].image.Width);
+                    rects[i] = new Rectangle()
+                    {
+                        Width = this.reel[i].image.Width,
+                        Height = this.reel[i].image.Height
+                    };
+                    ImageBrush ib = new ImageBrush();
+                    ib.ImageSource = this.reel[i].image;
+                    rects[i].Fill = ib;
+
+                    canvas.Children.Add(rects[i]);
+                    Canvas.SetTop(rects[i], this.reel[i].yPos);
+                    xPosRects[i] = this.reel[i].xPos - initDelta;
+                    Canvas.SetLeft(rects[i], xPosRects[i]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < this.reel.Length; i++)
+                {
+                    canvas.Children.Add(rects[i]);
+                    Canvas.SetTop(rects[i], this.reel[i].yPos);
+                    Canvas.SetLeft(rects[i], xPosRects[i]);
+                }
+            }
+        }
+
+        //private void DrawImagesOLD()
+        //{
+        //    int screenWidth = 1280;
+        //    for (int i = 0; i < this.reel.Length; i++)
+        //    {
+        //        int imgStart = this.reel[i].xPos;
+        //        int imgEnd = (int)(this.reel[i].xPos + this.reel[i].image.Width);
+        //        if (!(imgStart > initDelta + screenWidth || imgEnd < initDelta))
+        //        {
+        //            Rectangle rect = new Rectangle()
+        //            {
+        //                Width = this.reel[i].image.Width,
+        //                Height = this.reel[i].image.Height
+        //            };
+        //            ImageBrush ib = new ImageBrush();
+        //            ib.ImageSource = this.reel[i].image;
+        //            rect.Fill = ib;
+
+        //            canvas.Children.Add(rect);
+        //            Canvas.SetTop(rect, this.reel[i].yPos);
+        //            Canvas.SetLeft(rect, this.reel[i].xPos - initDelta);
+        //        }
+        //    }
+        //    initDelta += 10;
+        //}
+
+
+        public void DrawImages(int howMuch)
+        {
+            for (int i = 0; i < this.reel.Length; i++)
+            {
+                //int x = xPosRects[i] - howMuch;
+                //if (x + this.reel[i].image.Width < 0)
+                //    x = this.LastPos + 30; // margin!!! Unify!!!
+                xPosRects[i] -= howMuch;
+                if (xPosRects[i] + this.reel[i].image.Width < 0)
+                {
+                    int last = i - 1;
+                    if (last < 0)
+                        last = this.reel.Length - 1;
+                    xPosRects[i] = (int)(xPosRects[last] + this.reel[last].image.Width + 30); // margin!!! Unify!!!
+                }
+                Canvas.SetLeft(rects[i], xPosRects[i]);
+            }
+            //howMuch += 10;
+            //if (howMuch > 2560)
+            //    howMuch -= 2560;
+        }
+
+
     }
 
 }

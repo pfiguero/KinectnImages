@@ -20,10 +20,13 @@ namespace Pfiguero.Samples.ImageReel
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            KinectManager kinectManager = new KinectManager();
 
-            MainWindow w1 = new MainWindow(0, kinectManager);
-            MainWindow w2 = new MainWindow(1280, kinectManager);
+            KinectManager kinectManager = new KinectManager();
+            ReelManager reelManager = new ReelManager();
+
+
+            MainWindow w1 = new MainWindow(0, kinectManager, reelManager);
+            MainWindow w2 = new MainWindow(1280, kinectManager, reelManager);
 
             // register the event handler
             kinectManager.OnRefresh += new MyRefreshScreenHandler(w1.RefreshScreen);
