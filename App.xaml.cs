@@ -26,26 +26,26 @@ namespace Pfiguero.Samples.ImageReel
 
 
             MainWindow w1 = new MainWindow(0, kinectManager, reelManager);
-            MainWindow w2 = new MainWindow(1280, kinectManager, reelManager);
+            //MainWindow w2 = new MainWindow(1280, kinectManager, reelManager);
 
             // register the event handler
             kinectManager.OnRefresh += new MyRefreshScreenHandler(w1.RefreshScreen);
-            kinectManager.OnRefresh += new MyRefreshScreenHandler(w2.RefreshScreen);
+            //kinectManager.OnRefresh += new MyRefreshScreenHandler(w2.RefreshScreen);
 
             w1.Top = SystemParameters.VirtualScreenTop;
             w1.Left = SystemParameters.VirtualScreenLeft;
             w1.Width = SystemParameters.VirtualScreenWidth / 2;
             w1.Height = SystemParameters.VirtualScreenHeight;
 
-            w2.Top = SystemParameters.VirtualScreenTop;
-            w2.Left = SystemParameters.VirtualScreenWidth/2;
-            w2.Width = SystemParameters.VirtualScreenWidth / 2;
-            w2.Height = SystemParameters.VirtualScreenHeight;
+            //w2.Top = SystemParameters.VirtualScreenTop;
+            //w2.Left = SystemParameters.VirtualScreenWidth/2;
+            //w2.Width = SystemParameters.VirtualScreenWidth / 2;
+            //w2.Height = SystemParameters.VirtualScreenHeight;
 
             w1.Show();
-            w2.Show();
+            //w2.Show();
 
-            w2.Owner = w1;
+            //w2.Owner = w1;
         }
     }
 }

@@ -27,6 +27,10 @@ namespace Pfiguero.Samples.ImageReel
 
         private int initDelta = 0;
 
+        private Rectangle[] rects = null;
+
+        private int[] xPosRects = null;
+
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
@@ -43,7 +47,7 @@ namespace Pfiguero.Samples.ImageReel
             // initialize the components (controls) of the window
             this.InitializeComponent();
 
-            reelManager.CreateRects( canvas, initDelta );
+            reelManager.CreateRects( canvas, initDelta, out rects, out xPosRects);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -82,7 +86,7 @@ namespace Pfiguero.Samples.ImageReel
         private void RenderDepthPixels()
         {
             kinectManager.RefreshImage();
-            reelManager.DrawImages(kinectManager.HowMuch);
+            reelManager.DrawImages(kinectManager.HowMuch, rects, xPosRects);
         }
 
     }

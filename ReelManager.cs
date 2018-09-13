@@ -39,11 +39,6 @@ namespace Pfiguero.Samples.ImageReel
 
         public InfoReel[] reel = null;
 
-        private Rectangle[] rects = null;
-
-        private int[] xPosRects = null;
-
-
         public int LastPos { get; }
 
         private void WriteTestData()
@@ -94,40 +89,30 @@ namespace Pfiguero.Samples.ImageReel
             LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
         }
 
-        public void CreateRects(Canvas canvas, int initDelta)
+        public void CreateRects(Canvas canvas, int initDelta, out Rectangle[] rects, out int[] xPosRects)
         {
             int screenWidth = 1280;
-            if(rects == null)
-            {
-                rects = new Rectangle[this.reel.Length];
-                xPosRects = new int[this.reel.Length];
-                for (int i = 0; i < this.reel.Length; i++)
-                {
-                    int imgStart = this.reel[i].xPos;
-                    int imgEnd = (int)(this.reel[i].xPos + this.reel[i].image.Width);
-                    rects[i] = new Rectangle()
-                    {
-                        Width = this.reel[i].image.Width,
-                        Height = this.reel[i].image.Height
-                    };
-                    ImageBrush ib = new ImageBrush();
-                    ib.ImageSource = this.reel[i].image;
-                    rects[i].Fill = ib;
 
-                    canvas.Children.Add(rects[i]);
-                    Canvas.SetTop(rects[i], this.reel[i].yPos);
-                    xPosRects[i] = this.reel[i].xPos - initDelta;
-                    Canvas.SetLeft(rects[i], xPosRects[i]);
-                }
-            }
-            else
+            rects = new Rectangle[this.reel.Length];
+            xPosRects = new int[this.reel.Length];
+         
+            for (int i = 0; i < this.reel.Length; i++)
             {
-                for (int i = 0; i < this.reel.Length; i++)
+                int imgStart = this.reel[i].xPos;
+                int imgEnd = (int)(this.reel[i].xPos + this.reel[i].image.Width);
+                rects[i] = new Rectangle()
                 {
-                    canvas.Children.Add(rects[i]);
-                    Canvas.SetTop(rects[i], this.reel[i].yPos);
-                    Canvas.SetLeft(rects[i], xPosRects[i]);
-                }
+                    Width = this.reel[i].image.Width,
+                    Height = this.reel[i].image.Height
+                };
+                ImageBrush ib = new ImageBrush();
+                ib.ImageSource = this.reel[i].image;
+                rects[i].Fill = ib;
+
+                canvas.Children.Add(rects[i]);
+                Canvas.SetTop(rects[i], this.reel[i].yPos);
+                xPosRects[i] = this.reel[i].xPos - initDelta;
+                Canvas.SetLeft(rects[i], xPosRects[i]);
             }
         }
 
@@ -158,7 +143,7 @@ namespace Pfiguero.Samples.ImageReel
         //}
 
 
-        public void DrawImages(int howMuch)
+        public void DrawImages(int howMuch, Rectangle[] rects, int[] xPosRects)
         {
             for (int i = 0; i < this.reel.Length; i++)
             {
