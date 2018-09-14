@@ -41,6 +41,8 @@ namespace Pfiguero.Samples.ImageReel
 
         public int LastPos { get; }
 
+        TranslateTransform tr = null;
+
         private void WriteTestData()
         {
             // MyFile f = { "dir1", { { "f1", "t1" }, { "f2", "t2" } } };
@@ -75,6 +77,8 @@ namespace Pfiguero.Samples.ImageReel
                 reel[i].image = new BitmapImage(uri);
                 Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
+
+            tr = null;
 
             // Define positions in the reel...
             int marginX = 30;
@@ -113,6 +117,11 @@ namespace Pfiguero.Samples.ImageReel
                 Canvas.SetTop(rects[i], this.reel[i].yPos);
                 xPosRects[i] = this.reel[i].xPos - initDelta;
                 Canvas.SetLeft(rects[i], xPosRects[i]);
+
+                if(tr != null)
+                {
+                    rects[i].RenderTransform = tr;
+                }
             }
         }
 
@@ -145,6 +154,8 @@ namespace Pfiguero.Samples.ImageReel
 
         public void DrawImages(int howMuch, Rectangle[] rects, int[] xPosRects)
         {
+            if (tr != null)
+                return;
             for (int i = 0; i < this.reel.Length; i++)
             {
                 //int x = xPosRects[i] - howMuch;
@@ -165,7 +176,12 @@ namespace Pfiguero.Samples.ImageReel
             //    howMuch -= 2560;
         }
 
+        public void SetTranslation(TranslateTransform _tr)
+        {
+            tr = _tr;
+        }
 
     }
+
 
 }
