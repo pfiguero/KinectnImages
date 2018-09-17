@@ -164,16 +164,24 @@
     <Resource Include="programmersLog.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="data\50anios.json" />
+    <None Include="data\test.json" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="data\Creative_Commons_-_Slide2.jpg" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Resource Include="Images\50anios\001-26.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\50anios\001-169.jpg" />
+    <Resource Include="data\test\1280px-Beautiful_Wind_Turbine_for_Renewable_Electricity_Generator.png" />
+    <Resource Include="data\test\18806020a61d8f15954ecb05f588b008.jpg" />
+    <Resource Include="data\test\BarnImages.jpg" />
+    <Resource Include="data\test\bbb-splash1.png" />
+    <Resource Include="data\test\Beautiful_Bengal.jpg" />
+    <Resource Include="data\test\creative-commons-agreement-beautiful-creative-mons-agreement-beautiful-introduction-to-social-media-of-creative-commons-agreement.jpg" />
+    <Resource Include="data\test\maxresdefault.jpg" />
+    <Resource Include="data\test\photo-1531779414549-0ffbbdbe4e17.jpg" />
+    <Resource Include="data\test\story-goa-flickr-rajarshi-mitra_647_092316093903.jpg" />
+    <Resource Include="data\test\story_brisbane,-flickr,-sam-petherbridge_647_011216125803.jpg" />
+    <Resource Include="data\test\w1200_h630_q70_----1514671727.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

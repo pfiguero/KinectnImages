@@ -26,12 +26,12 @@ namespace Pfiguero.Samples.ImageReel
             _OnStartup2(e);
         }
 
-
         private void _OnStartup2(StartupEventArgs e)
         {
-            ReelManager reelManager = new ReelManager();
+            ReelManager reelManager = new ReelManager("test.json");
 
-            var da = new DoubleAnimation(1024,0, new Duration(TimeSpan.FromSeconds(20)));
+            var da = new DoubleAnimation(8024, 0, new Duration(TimeSpan.FromSeconds(200)));
+            da.SpeedRatio = 30;
             var rt = new TranslateTransform();
             da.RepeatBehavior = RepeatBehavior.Forever;
             rt.BeginAnimation(TranslateTransform.XProperty, da);
@@ -49,7 +49,7 @@ namespace Pfiguero.Samples.ImageReel
         private void _OnStartup1(StartupEventArgs e)
         {
             KinectManager kinectManager = new KinectManager();
-            ReelManager reelManager = new ReelManager();
+            ReelManager reelManager = new ReelManager("test.json");
 
             MainWindow w1 = new MainWindow(0, kinectManager, reelManager);
             //MainWindow w2 = new MainWindow(1280, kinectManager, reelManager);

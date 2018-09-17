@@ -39,7 +39,7 @@ namespace Pfiguero.Samples.ImageReel
 
         public InfoReel[] reel = null;
 
-        public int LastPos { get; }
+        public int LastPos { get; set;  }
 
         TranslateTransform tr = null;
 
@@ -60,25 +60,33 @@ namespace Pfiguero.Samples.ImageReel
             Debug.WriteLine("@@@ " + s);
         }
 
-        public ReelManager()
+        public ReelManager(String jsonName )
         {
             //// Background
             //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
             //ImageSource imageSource = new BitmapImage(uri);
             // Open the json file and de serialize it
-            MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\50anios.json")));
+            String p = @"..\..\..\data\" + jsonName;
+            MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, p)));
 
             reel = new InfoReel[f.images.Length];
             Uri uri;
+            char[] seps = { '.' };
+            String directory = jsonName.Split(seps)[0];
             for (int i = 0; i < reel.Length; i++)
             {
-                String s = @"..\..\..\images\" + f.directory + "\\" + f.images[i].filename;
+                String s = @"..\..\..\data\" + directory + "\\" + f.images[i].filename;
                 uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
                 reel[i].image = new BitmapImage(uri);
                 Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
 
             tr = null;
+        }
+
+        public void CreateRects(Canvas canvas, int initDelta, out Rectangle[] rects, out int[] xPosRects)
+        {
+            int screenWidth = 1280;
 
             // Define positions in the reel...
             int marginX = 30;
@@ -91,11 +99,6 @@ namespace Pfiguero.Samples.ImageReel
                 reel[i].yPos = (int)(screenHeight - reel[i].image.Height) / 2;
             }
             LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
-        }
-
-        public void CreateRects(Canvas canvas, int initDelta, out Rectangle[] rects, out int[] xPosRects)
-        {
-            int screenWidth = 1280;
 
             rects = new Rectangle[this.reel.Length];
             xPosRects = new int[this.reel.Length];

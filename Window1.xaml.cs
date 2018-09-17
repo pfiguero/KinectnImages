@@ -40,5 +40,11 @@ namespace Pfiguero.Samples.ImageReel
             reelManager.CreateRects(canvas, 0, out rects, out xPosRects);
 
         }
+
+        private void OnLoad(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Maximized;
+        }
+
     }
 }
