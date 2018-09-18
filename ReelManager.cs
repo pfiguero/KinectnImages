@@ -9,10 +9,12 @@ namespace Pfiguero.Samples.ImageReel
     using System;
     using System.Diagnostics;
     using System.IO;
+    using System.Windows;
     using System.Windows.Shapes;
     using System.Windows.Controls;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
+    using System.Windows.Media.Animation;
     using Newtonsoft.Json;
 
     public class ReelManager
@@ -33,15 +35,19 @@ namespace Pfiguero.Samples.ImageReel
         public struct InfoReel
         {
             public ImageSource image;
-            public int xPos;
-            public int yPos;
+            public TransformGroup trGroup;
+            public TransformGroup trGroupLocal;
+            //public ScaleTransform scale;
         }
 
         public InfoReel[] reel = null;
 
-        public int LastPos { get; set;  }
+        public double LastPos { get; set;  }
 
-        TranslateTransform tr = null;
+        // for the animation of the reel
+        private TranslateTransform tr = null;
+
+        private DoubleAnimation da = null;
 
         private void WriteTestData()
         {
@@ -84,29 +90,49 @@ namespace Pfiguero.Samples.ImageReel
             tr = null;
         }
 
-        public void CreateRects(Canvas canvas, int initDelta, out Rectangle[] rects, out int[] xPosRects)
+        public void CreateRects(Window1 w, int initDelta )
         {
-            int screenWidth = 1280;
+            LastPos = 0.0;
 
-            // Define positions in the reel...
-            int marginX = 30;
-            int screenHeight = 720;
-            reel[0].xPos = marginX;
-            reel[0].yPos = (int)(screenHeight - reel[0].image.Height) / 2;
+            TranslateTransform trDelta = new TranslateTransform();
+            trDelta.X = initDelta;
+
+            // common margin
+            TranslateTransform trMargin = new TranslateTransform(30.0, 0.0);
+
+            // it should be read from the window... 
+            double screenHeight = w.Height;
+
+            reel[0].trGroup = new TransformGroup();
+            reel[0].trGroup.Children.Add(tr);
+            reel[0].trGroup.Children.Add(trMargin);
+
+            reel[0].trGroupLocal = new TransformGroup();
+            reel[0].trGroupLocal.Children.Add(reel[0].trGroup);
+            reel[0].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[0].image.Height) / 2));
+
+            LastPos += trMargin.X + reel[0].image.Width;
+
             for (int i = 1; i < reel.Length; i++)
             {
-                reel[i].xPos = (int)(reel[i - 1].xPos + reel[i - 1].image.Width + marginX);
-                reel[i].yPos = (int)(screenHeight - reel[i].image.Height) / 2;
-            }
-            LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
+                reel[i].trGroup = new TransformGroup();
+                reel[i].trGroup.Children.Add(reel[i-1].trGroup);
+                reel[i].trGroup.Children.Add(new TranslateTransform(reel[i-1].image.Width,0.0));
+                reel[i].trGroup.Children.Add(trMargin);
 
-            rects = new Rectangle[this.reel.Length];
-            xPosRects = new int[this.reel.Length];
-         
+                reel[i].trGroupLocal = new TransformGroup();
+                reel[i].trGroupLocal.Children.Add(reel[i].trGroup);
+                reel[i].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[i].image.Height) / 2));
+
+                LastPos += trMargin.X + reel[i].image.Width;
+            }
+
+            LastPos += trMargin.X + reel[reel.Length-1].image.Width;
+
+            Canvas canvas = w.canvas;
+            Rectangle[] rects = new Rectangle[this.reel.Length];         
             for (int i = 0; i < this.reel.Length; i++)
             {
-                int imgStart = this.reel[i].xPos;
-                int imgEnd = (int)(this.reel[i].xPos + this.reel[i].image.Width);
                 rects[i] = new Rectangle()
                 {
                     Width = this.reel[i].image.Width,
@@ -115,17 +141,53 @@ namespace Pfiguero.Samples.ImageReel
                 ImageBrush ib = new ImageBrush();
                 ib.ImageSource = this.reel[i].image;
                 rects[i].Fill = ib;
+                rects[i].RenderTransform = reel[i].trGroupLocal;
 
                 canvas.Children.Add(rects[i]);
-                Canvas.SetTop(rects[i], this.reel[i].yPos);
-                xPosRects[i] = this.reel[i].xPos - initDelta;
-                Canvas.SetLeft(rects[i], xPosRects[i]);
-
-                if(tr != null)
-                {
-                    rects[i].RenderTransform = tr;
-                }
             }
+        }
+
+        public void StartAnimation()
+        {
+            da = new DoubleAnimation(0, -LastPos, new Duration(TimeSpan.FromSeconds(200)));
+            da.SpeedRatio = 5;
+            da.AccelerationRatio = .1;
+            da.RepeatBehavior = RepeatBehavior.Forever;
+            tr.BeginAnimation(TranslateTransform.XProperty, da);
+        }
+
+        public static bool stopping = true;
+
+        public void StopAnimation()
+        {
+            if(stopping)
+            {
+                double curValue = tr.X;
+                da = new DoubleAnimation(toValue: tr.X - 100, duration: new Duration(TimeSpan.FromSeconds(2)));
+                da.SpeedRatio = 5;
+                da.AccelerationRatio = .1;
+                tr.BeginAnimation(TranslateTransform.XProperty, da);
+                stopping = false;
+            }
+            else
+            {
+                da = new DoubleAnimation(toValue: -LastPos, duration: new Duration(TimeSpan.FromSeconds(200)));
+                da.SpeedRatio = 5;
+                da.AccelerationRatio = .1;
+                da.Completed += new EventHandler(CompletedAnimation);
+                tr.BeginAnimation(TranslateTransform.XProperty, da);
+                stopping = true;
+            }
+        }
+
+        // If the animation finishes, it means it was interrupted. Create it again from the beginning
+        private void CompletedAnimation(object sender, EventArgs e)
+        {
+            da = new DoubleAnimation(0, -LastPos, new Duration(TimeSpan.FromSeconds(200)));
+            da.SpeedRatio = 5;
+            da.AccelerationRatio = .1;
+            da.RepeatBehavior = RepeatBehavior.Forever;
+            tr.BeginAnimation(TranslateTransform.XProperty, da);
         }
 
         //private void DrawImagesOLD()
@@ -179,7 +241,7 @@ namespace Pfiguero.Samples.ImageReel
             //    howMuch -= 2560;
         }
 
-        public void SetTranslation(TranslateTransform _tr)
+        public void SetAnimationTranslation(TranslateTransform _tr)
         {
             tr = _tr;
         }

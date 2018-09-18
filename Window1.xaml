@@ -5,14 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pfiguero.Samples.ImageReel"
         mc:Ignorable="d"
-        Title="Image Reel" Height="720" Width="1280"         
+        Title="Image Reel"        
         WindowStyle="None"
         Loaded="OnLoad"
+        MouseDoubleClick="DoubleClick"
         Cursor="None">
     <Grid>
 
-        <Canvas HorizontalAlignment="Left" Height="720" Margin="0"
-                VerticalAlignment="Top" Width="1280"
+        <Canvas HorizontalAlignment="Left" Margin="0"
+                VerticalAlignment="Top"
                 Name="canvas"/>
     </Grid>
 

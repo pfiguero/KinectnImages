@@ -19,26 +19,15 @@ namespace Pfiguero.Samples.ImageReel
     /// </summary>
     public partial class Window1 : Window
     {
-        private ReelManager reelManager = null;
+        private App app=null;
 
-        private Rectangle[] rects = null;
-
-        private int[] xPosRects = null;
-
-
-        public Window1(ReelManager r, TranslateTransform tr)
+        public Window1(App _app)
         {
-            reelManager = r;
-
+            app = _app;
             // use the window object as the view model in this simple example
             this.DataContext = this;
 
-            reelManager.SetTranslation(tr);
-
             InitializeComponent();
-
-            reelManager.CreateRects(canvas, 0, out rects, out xPosRects);
-
         }
 
         private void OnLoad(object sender, RoutedEventArgs e)
@@ -46,5 +35,9 @@ namespace Pfiguero.Samples.ImageReel
             this.WindowState = WindowState.Maximized;
         }
 
+        private void DoubleClick(object sender, RoutedEventArgs e)
+        {
+            app.DoubleClick();
+        }
     }
 }

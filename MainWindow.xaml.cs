@@ -47,7 +47,8 @@ namespace Pfiguero.Samples.ImageReel
             // initialize the components (controls) of the window
             this.InitializeComponent();
 
-            reelManager.CreateRects( canvas, initDelta, out rects, out xPosRects);
+            // not here... recheck...
+            // reelManager.CreateRects( this, initDelta );
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
