@@ -64,7 +64,7 @@ namespace Pfiguero.Samples.ImageReel
             //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
             //ImageSource imageSource = new BitmapImage(uri);
             // Open the json file and de serialize it
-            MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\50anios.json")));
+            MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\msc.json")));
 
             reel = new InfoReel[f.images.Length];
             Uri uri;
@@ -72,10 +72,12 @@ namespace Pfiguero.Samples.ImageReel
             {
                 String s = @"..\..\..\images\" + f.directory + "\\" + f.images[i].filename;
                 uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
-                reel[i].image = new BitmapImage(uri);
+                // hack... for the images in the EP...
+                reel[i].image = CreateResizedImage(new BitmapImage(uri), 1280, 720, 1);
                 Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
 
+            
             // Define positions in the reel...
             int marginX = 30;
             int screenHeight = 720;
@@ -87,6 +89,27 @@ namespace Pfiguero.Samples.ImageReel
                 reel[i].yPos = (int)(screenHeight - reel[i].image.Height) / 2;
             }
             LastPos = (int)(reel[reel.Length - 1].xPos + reel[reel.Length - 1].image.Width + marginX);
+        }
+
+        private static BitmapFrame CreateResizedImage(ImageSource source, int width, int height, int margin)
+        {
+            var rect = new System.Windows.Rect(margin, margin, width - margin * 2, height - margin * 2);
+
+            var group = new DrawingGroup();
+            RenderOptions.SetBitmapScalingMode(group, BitmapScalingMode.HighQuality);
+            group.Children.Add(new ImageDrawing(source, rect));
+
+            var drawingVisual = new DrawingVisual();
+            using (var drawingContext = drawingVisual.RenderOpen())
+                drawingContext.DrawDrawing(group);
+
+            var resizedImage = new RenderTargetBitmap(
+                width, height,         // Resized dimensions
+                96, 96,                // Default DPI values
+                PixelFormats.Default); // Default pixel format
+            resizedImage.Render(drawingVisual);
+
+            return BitmapFrame.Create(resizedImage);
         }
 
         public void CreateRects(Canvas canvas, int initDelta, out Rectangle[] rects, out int[] xPosRects)
