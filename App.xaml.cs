@@ -8,6 +8,7 @@ namespace Pfiguero.Samples.ImageReel
 {
     using System;
     using System.Diagnostics;
+    using System.Timers;
     using System.Windows;
     using System.Windows.Media;
 
@@ -18,6 +19,7 @@ namespace Pfiguero.Samples.ImageReel
     {
         private ReelManager reelManager = null;
         private KinectManager kinectManager = null;
+        private bool allowEvents = false;
 
         public ImageSource ImageSource => kinectManager.GetImage();
 
@@ -26,6 +28,7 @@ namespace Pfiguero.Samples.ImageReel
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            allowEvents = false;
 
             _OnStartup2(e);
         }
@@ -42,7 +45,7 @@ namespace Pfiguero.Samples.ImageReel
             w1.Width = SystemParameters.VirtualScreenWidth / 2;
             w1.Height = SystemParameters.VirtualScreenHeight;
 
-            reelManager = new ReelManager("msc.json", w1.Width, w1.Height );
+            reelManager = new ReelManager("test.json", w1.Width, w1.Height );
 
 
             var rt = new TranslateTransform();
@@ -52,6 +55,7 @@ namespace Pfiguero.Samples.ImageReel
 
             reelManager.StartAnimation();
 
+            allowEvents = true;
             kinectManager.OnSomebody += new MyRefreshScreenHandler(w1.OnResize);
             kinectManager.OnNobody += new MyRefreshScreenHandler(w1.OnResize);
 
@@ -66,7 +70,20 @@ namespace Pfiguero.Samples.ImageReel
 
         public void OnResize()
         {
-            reelManager.ToggleSize();
+            if(allowEvents)
+            {
+                allowEvents = false;
+                Timer aTimer = new Timer(5000);
+                aTimer.Elapsed += OnTimer;
+                aTimer.AutoReset = false;
+                aTimer.Enabled = true;
+                reelManager.ToggleSize();
+            }
+        }
+
+        private void OnTimer(Object source, ElapsedEventArgs e)
+        {
+            allowEvents = true;
         }
 
         // Old code...Should be checked...
