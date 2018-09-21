@@ -13,6 +13,10 @@
         Cursor="None">
     <Grid>
 
+        <Viewbox Grid.Row="1" HorizontalAlignment="Center">
+            <Image Source="{Binding ImageSource}"  />
+        </Viewbox>
+
         <Canvas HorizontalAlignment="Left" Margin="0"
                 VerticalAlignment="Top"
                 Name="canvas"/>

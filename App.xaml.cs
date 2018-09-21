@@ -19,6 +19,8 @@ namespace Pfiguero.Samples.ImageReel
         private ReelManager reelManager = null;
         private KinectManager kinectManager = null;
 
+        public ImageSource ImageSource => kinectManager.GetImage();
+
         // Excerpts from https://social.msdn.microsoft.com/Forums/vstudio/en-US/5d181304-8952-4663-8c3c-dc4d986aa8dd/dual-screen-application-and-wpf?forum=wpf
         // and https://stackoverflow.com/questions/2704887/is-there-a-wpf-equaivalent-to-system-windows-forms-screen
         protected override void OnStartup(StartupEventArgs e)
@@ -30,16 +32,18 @@ namespace Pfiguero.Samples.ImageReel
 
         private void _OnStartup2(StartupEventArgs e)
         {
+            kinectManager = new KinectManager();
+            kinectManager.GetImage();
+            kinectManager.RefreshImage();
+
             Window1 w1 = new Window1(this);
             w1.Top = SystemParameters.VirtualScreenTop;
             w1.Left = SystemParameters.VirtualScreenLeft;
             w1.Width = SystemParameters.VirtualScreenWidth / 2;
             w1.Height = SystemParameters.VirtualScreenHeight;
 
-            w1.Show();
+            reelManager = new ReelManager("msc.json", w1.Width, w1.Height );
 
-            reelManager = new ReelManager("test.json", w1.Width, w1.Height );
-            kinectManager = new KinectManager();
 
             var rt = new TranslateTransform();
             reelManager.SetAnimationTranslation(rt);
@@ -47,7 +51,12 @@ namespace Pfiguero.Samples.ImageReel
             reelManager.CreateRects(w1, 0);
 
             reelManager.StartAnimation();
-            kinectManager.OnRefresh += new MyRefreshScreenHandler(w1.OnResize);
+
+            kinectManager.OnSomebody += new MyRefreshScreenHandler(w1.OnResize);
+            kinectManager.OnNobody += new MyRefreshScreenHandler(w1.OnResize);
+
+            w1.Show();
+
         }
 
         public void OnDoubleClick()

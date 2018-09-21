@@ -14,9 +14,14 @@ namespace Pfiguero.Samples.ImageReel
     using Microsoft.Kinect;
 
     /// <summary>
-    /// This event is triggered when new info from the kinect is available.
+    /// This event is triggered when there is somebody in front of the Kinect.
     /// </summary>
     public delegate void MyRefreshScreenHandler(object source, EventArgs e);
+
+    /// <summary>
+    /// This event is triggered when nobody is in front.
+    /// </summary>
+    public delegate void MyRefreshScreenHandler2(object source, EventArgs e);
 
     public interface IGetImage
     {
@@ -29,7 +34,9 @@ namespace Pfiguero.Samples.ImageReel
     public class KinectManager : IDisposable, IGetImage
     {
 
-        public event MyRefreshScreenHandler OnRefresh;
+        public event MyRefreshScreenHandler OnSomebody;
+
+        public event MyRefreshScreenHandler OnNobody;
 
         /// <summary>
         /// This is the image we'll show
@@ -262,6 +269,13 @@ namespace Pfiguero.Samples.ImageReel
                 if (Math.Abs(val - sum) > stdDev)
                 {
                     _howMuch = 10;
+                    OnSomebody(this, new EventArgs());
+                }
+                // hack... using _howMuch to generate a new event
+                else if(_howMuch == 10 )
+                {
+                    _howMuch = 100;
+                    OnNobody(this, new EventArgs());
                 }
             }
         }
@@ -355,7 +369,7 @@ namespace Pfiguero.Samples.ImageReel
 
             if (depthFrameProcessed)
             {
-                OnRefresh(this, new EventArgs());
+                // OnRefresh(this, new EventArgs());
                 _howMuch = _howMuch >= 100 ? _howMuch : _howMuch + 1;
                 // Debug.WriteLine("How Much: " + _howMuch);
 

@@ -95,8 +95,8 @@ namespace Pfiguero.Samples.ImageReel
             ImageSource result = img;
             if(img.Width > width || img.Height > height )
             {
-                double ratioWidth = img.Width / width;
-                double ratioHeight = img.Height / height;
+                double ratioWidth = width / img.Width ;
+                double ratioHeight = height / img.Height;
                 if( ratioWidth > ratioHeight )
                 {
                     result = CreateResizedImage(img, (int) (img.Width * ratioHeight), (int) (img.Height * ratioHeight), 1);
@@ -247,7 +247,6 @@ namespace Pfiguero.Samples.ImageReel
                     reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleXProperty, da);
                     reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleYProperty, da);
                     reel[i].IsBig = false;
-                    Debug.WriteLine("{0} IF IsBig[" + i + "]: " + reel[i].IsBig, reel[i]);
                 }
                 else
                 {
@@ -257,7 +256,6 @@ namespace Pfiguero.Samples.ImageReel
                     reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleXProperty, da);
                     reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleYProperty, da);
                     reel[i].IsBig = true;
-                    Debug.WriteLine("ELSE IsBig[" + i + "]: " + reel[i].IsBig);
                 }
             }
         }
