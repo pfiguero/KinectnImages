@@ -8,7 +8,8 @@
         Title="Image Reel"        
         WindowStyle="None"
         Loaded="OnLoad"
-        MouseDoubleClick="DoubleClick"
+        MouseDoubleClick="OnDoubleClick"
+        KeyDown="OnResize"
         Cursor="None">
     <Grid>
 

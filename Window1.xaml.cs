@@ -35,9 +35,14 @@ namespace Pfiguero.Samples.ImageReel
             this.WindowState = WindowState.Maximized;
         }
 
-        private void DoubleClick(object sender, RoutedEventArgs e)
+        public void OnDoubleClick(object sender, EventArgs e)
         {
-            app.DoubleClick();
+            app.OnDoubleClick();
+        }
+
+        public void OnResize(object sender, EventArgs e)
+        {
+            app.OnResize();
         }
     }
 }

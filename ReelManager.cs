@@ -37,7 +37,8 @@ namespace Pfiguero.Samples.ImageReel
             public ImageSource image;
             public TransformGroup trGroup;
             public TransformGroup trGroupLocal;
-            //public ScaleTransform scale;
+            public ScaleTransform scaleT;
+            public bool IsBig { get; set; }
         }
 
         public InfoReel[] reel = null;
@@ -46,8 +47,6 @@ namespace Pfiguero.Samples.ImageReel
 
         // for the animation of the reel
         private TranslateTransform tr = null;
-
-        private DoubleAnimation da = null;
 
         private void WriteTestData()
         {
@@ -66,7 +65,7 @@ namespace Pfiguero.Samples.ImageReel
             Debug.WriteLine("@@@ " + s);
         }
 
-        public ReelManager(String jsonName )
+        public ReelManager(String jsonName, double width, double height )
         {
             //// Background
             //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
@@ -83,11 +82,52 @@ namespace Pfiguero.Samples.ImageReel
             {
                 String s = @"..\..\..\data\" + directory + "\\" + f.images[i].filename;
                 uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
-                reel[i].image = new BitmapImage(uri);
+                reel[i] = new InfoReel();
+                reel[i].image = CheckSize(new BitmapImage(uri), width, height);
                 Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
 
             tr = null;
+        }
+
+        private ImageSource CheckSize(ImageSource img, double width, double height)
+        {
+            ImageSource result = img;
+            if(img.Width > width || img.Height > height )
+            {
+                double ratioWidth = img.Width / width;
+                double ratioHeight = img.Height / height;
+                if( ratioWidth > ratioHeight )
+                {
+                    result = CreateResizedImage(img, (int) (img.Width * ratioHeight), (int) (img.Height * ratioHeight), 1);
+                }
+                else
+                {
+                    result = CreateResizedImage(img, (int)(img.Width * ratioWidth), (int)(img.Height * ratioWidth), 1);
+                }
+            }
+            return result;
+        }
+
+        private static ImageSource CreateResizedImage(ImageSource source, int width, int height, int margin)
+        {
+            var rect = new System.Windows.Rect(margin, margin, width - margin * 2, height - margin * 2);
+
+            var group = new DrawingGroup();
+            RenderOptions.SetBitmapScalingMode(group, BitmapScalingMode.HighQuality);
+            group.Children.Add(new ImageDrawing(source, rect));
+
+            var drawingVisual = new DrawingVisual();
+            using (var drawingContext = drawingVisual.RenderOpen())
+                drawingContext.DrawDrawing(group);
+
+            var resizedImage = new RenderTargetBitmap(
+                width, height,         // Resized dimensions
+                96, 96,                // Default DPI values
+                PixelFormats.Default); // Default pixel format
+            resizedImage.Render(drawingVisual);
+
+            return BitmapFrame.Create(resizedImage);
         }
 
         public void CreateRects(Window1 w, int initDelta )
@@ -109,6 +149,11 @@ namespace Pfiguero.Samples.ImageReel
 
             reel[0].trGroupLocal = new TransformGroup();
             reel[0].trGroupLocal.Children.Add(reel[0].trGroup);
+            reel[0].scaleT = new ScaleTransform();
+            reel[0].scaleT.ScaleX = 1;
+            reel[0].scaleT.ScaleY = 1;
+            reel[0].IsBig = true;
+            reel[0].trGroupLocal.Children.Add(reel[0].scaleT);
             reel[0].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[0].image.Height) / 2));
 
             LastPos += trMargin.X + reel[0].image.Width;
@@ -122,6 +167,11 @@ namespace Pfiguero.Samples.ImageReel
 
                 reel[i].trGroupLocal = new TransformGroup();
                 reel[i].trGroupLocal.Children.Add(reel[i].trGroup);
+                reel[i].scaleT = new ScaleTransform();
+                reel[i].scaleT.ScaleX = 1;
+                reel[i].scaleT.ScaleY = 1;
+                reel[i].IsBig = true;
+                reel[i].trGroupLocal.Children.Add(reel[i].scaleT);
                 reel[i].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[i].image.Height) / 2));
 
                 LastPos += trMargin.X + reel[i].image.Width;
@@ -149,6 +199,8 @@ namespace Pfiguero.Samples.ImageReel
 
         public void StartAnimation()
         {
+            DoubleAnimation da = null;
+
             da = new DoubleAnimation(0, -LastPos, new Duration(TimeSpan.FromSeconds(200)));
             da.SpeedRatio = 5;
             da.AccelerationRatio = .1;
@@ -156,11 +208,12 @@ namespace Pfiguero.Samples.ImageReel
             tr.BeginAnimation(TranslateTransform.XProperty, da);
         }
 
-        public static bool stopping = true;
+        private static bool stopping = true;
 
-        public void StopAnimation()
+        public void ToggleStop()
         {
-            if(stopping)
+            DoubleAnimation da = null;
+            if (stopping)
             {
                 double curValue = tr.X;
                 da = new DoubleAnimation(toValue: tr.X - 100, duration: new Duration(TimeSpan.FromSeconds(2)));
@@ -180,9 +233,42 @@ namespace Pfiguero.Samples.ImageReel
             }
         }
 
+        public void ToggleSize()
+        {
+            DoubleAnimation da = null;
+            Debug.WriteLine("ToggleSize");
+            for (int i=0;i<reel.Length;i++)
+            {
+                if (reel[i].IsBig)
+                {
+                    da = new DoubleAnimation(fromValue: 1, toValue: 0.5, duration: new Duration(TimeSpan.FromSeconds(2)));
+                    da.SpeedRatio = 5;
+                    da.AccelerationRatio = .1;
+                    reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleXProperty, da);
+                    reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleYProperty, da);
+                    reel[i].IsBig = false;
+                    Debug.WriteLine("{0} IF IsBig[" + i + "]: " + reel[i].IsBig, reel[i]);
+                }
+                else
+                {
+                    da = new DoubleAnimation(fromValue: 0.5, toValue: 1, duration: new Duration(TimeSpan.FromSeconds(2)));
+                    da.SpeedRatio = 5;
+                    da.AccelerationRatio = .1;
+                    reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleXProperty, da);
+                    reel[i].scaleT.BeginAnimation(ScaleTransform.ScaleYProperty, da);
+                    reel[i].IsBig = true;
+                    Debug.WriteLine("ELSE IsBig[" + i + "]: " + reel[i].IsBig);
+                }
+            }
+        }
+
+
+
         // If the animation finishes, it means it was interrupted. Create it again from the beginning
         private void CompletedAnimation(object sender, EventArgs e)
         {
+            DoubleAnimation da = null;
+
             da = new DoubleAnimation(0, -LastPos, new Duration(TimeSpan.FromSeconds(200)));
             da.SpeedRatio = 5;
             da.AccelerationRatio = .1;
