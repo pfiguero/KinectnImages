@@ -21,8 +21,6 @@ namespace Pfiguero.Samples.ImageReel
     {
         private App app=null;
 
-        public ImageSource ImageSource => app.ImageSource;
-
         public Window1(App _app)
         {
             app = _app;
