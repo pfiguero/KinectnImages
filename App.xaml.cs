@@ -42,8 +42,9 @@ namespace Pfiguero.Samples.ImageReel
             Window1 w1 = new Window1(this);
             w1.Top = SystemParameters.VirtualScreenTop;
             w1.Left = SystemParameters.VirtualScreenLeft;
-            w1.Width = SystemParameters.VirtualScreenWidth / 2;
+            w1.Width = SystemParameters.VirtualScreenWidth // /2; // when two screens
             w1.Height = SystemParameters.VirtualScreenHeight;
+            w1.Show();
 
             reelManager = new ReelManager("test.json", w1.Width, w1.Height );
 
@@ -59,7 +60,6 @@ namespace Pfiguero.Samples.ImageReel
             kinectManager.OnSomebody += new MyRefreshScreenHandler(w1.OnResize);
             kinectManager.OnNobody += new MyRefreshScreenHandler(w1.OnResize);
 
-            w1.Show();
 
         }
 
@@ -85,35 +85,6 @@ namespace Pfiguero.Samples.ImageReel
         {
             allowEvents = true;
         }
-
-        // Old code...Should be checked...
-        //private void _OnStartup1(StartupEventArgs e)
-        //{
-        //    KinectManager kinectManager = new KinectManager();
-        //    ReelManager reelManager = new ReelManager("test.json");
-
-        //    MainWindow w1 = new MainWindow(0, kinectManager, reelManager);
-        //    //MainWindow w2 = new MainWindow(1280, kinectManager, reelManager);
-
-        //    // register the event handler
-        //    kinectManager.OnRefresh += new MyRefreshScreenHandler(w1.RefreshScreen);
-        //    //kinectManager.OnRefresh += new MyRefreshScreenHandler(w2.RefreshScreen);
-
-        //    w1.Top = SystemParameters.VirtualScreenTop;
-        //    w1.Left = SystemParameters.VirtualScreenLeft;
-        //    w1.Width = SystemParameters.VirtualScreenWidth / 2;
-        //    w1.Height = SystemParameters.VirtualScreenHeight;
-
-        //    //w2.Top = SystemParameters.VirtualScreenTop;
-        //    //w2.Left = SystemParameters.VirtualScreenWidth/2;
-        //    //w2.Width = SystemParameters.VirtualScreenWidth / 2;
-        //    //w2.Height = SystemParameters.VirtualScreenHeight;
-
-        //    w1.Show();
-        //    //w2.Show();
-
-        //    //w2.Owner = w1;
-        //}
 
     }
 }

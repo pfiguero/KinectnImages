@@ -22,7 +22,6 @@ namespace Pfiguero.Samples.ImageReel
         // Input structure from the file
         struct MyFile
         {
-            public String directory;
             public ImageInfo[] images;
         }
         struct ImageInfo
@@ -42,31 +41,19 @@ namespace Pfiguero.Samples.ImageReel
         }
 
         public InfoReel[] reel = null;
+        public ImageSource background = null;
 
         public double LastPos { get; set;  }
 
         // for the animation of the reel
         private TranslateTransform tr = null;
+        private double width;
+        private double height;
 
-        private void WriteTestData()
+        public ReelManager(String jsonName, double _width, double _height )
         {
-            // MyFile f = { "dir1", { { "f1", "t1" }, { "f2", "t2" } } };
-            MyFile f = new MyFile();
-            f.directory = "dir1";
-            f.images = new ImageInfo[2];
-            f.images[0] = new ImageInfo();
-            f.images[0].filename = "f1";
-            f.images[0].title = "i1";
-            f.images[1] = new ImageInfo();
-            f.images[1].filename = "f1";
-            f.images[1].title = "i1";
-
-            String s = JsonConvert.SerializeObject(f);
-            Debug.WriteLine("@@@ " + s);
-        }
-
-        public ReelManager(String jsonName, double width, double height )
-        {
+            width = _width;
+            height = _height;
             //// Background
             //Uri uri = new System.Uri(Path.Combine(Environment.CurrentDirectory, @"..\..\..\data\PromociónRedes.jpg"));
             //ImageSource imageSource = new BitmapImage(uri);
@@ -74,18 +61,24 @@ namespace Pfiguero.Samples.ImageReel
             String p = @"..\..\..\data\" + jsonName;
             MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, p)));
 
-            reel = new InfoReel[f.images.Length];
+            // Last image is saved for background
+            reel = new InfoReel[f.images.Length-1];
             Uri uri;
             char[] seps = { '.' };
             String directory = jsonName.Split(seps)[0];
+            String s;
             for (int i = 0; i < reel.Length; i++)
             {
-                String s = @"..\..\..\data\" + directory + "\\" + f.images[i].filename;
+                s = @"..\..\..\data\" + directory + "\\" + f.images[i].filename;
                 uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
                 reel[i] = new InfoReel();
                 reel[i].image = CheckSize(new BitmapImage(uri), width, height);
                 Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
+
+            s = @"..\..\..\data\" + directory + "\\" + f.images[f.images.Length-1].filename;
+            uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
+            background = CheckSize(new BitmapImage(uri), width, height);
 
             tr = null;
         }
@@ -180,6 +173,22 @@ namespace Pfiguero.Samples.ImageReel
             LastPos += trMargin.X + reel[reel.Length-1].image.Width;
 
             Canvas canvas = w.canvas;
+            // background
+            {
+                Rectangle r = new Rectangle()
+                {
+                    Width = width,
+                    Height = height
+                };
+                ImageBrush ib = new ImageBrush();
+                ib.ImageSource = background;
+                r.Fill = ib;
+                canvas.Children.Add(r);
+                Canvas.SetTop(r, 0.0);
+                Canvas.SetLeft(r, 0.0);
+            }
+
+            // Reel
             Rectangle[] rects = new Rectangle[this.reel.Length];         
             for (int i = 0; i < this.reel.Length; i++)
             {
@@ -195,6 +204,7 @@ namespace Pfiguero.Samples.ImageReel
 
                 canvas.Children.Add(rects[i]);
             }
+
         }
 
         public void StartAnimation()
