@@ -13,23 +13,25 @@ namespace Pfiguero.Samples.ImageReel
     using System.Windows.Media.Imaging;
     using Microsoft.Kinect;
 
-    /// <summary>
-    /// This event is triggered when there is somebody in front of the Kinect.
-    /// No events are triggered if somebody stays there
-    /// </summary>
-    public delegate void MyRefreshScreenHandler(object source, EventArgs e);
+    public class LogEventArgs: EventArgs
+    {
+        public int FrameId { get; set; }
+        public int Number { get; set; }
+        public ImageSource Image { get; set; }
+    }
 
-    /// <summary>
-    /// This event is triggered when nobody is in front.
-    /// </summary>
-    public delegate void MyRefreshScreenHandler2(object source, EventArgs e);
+    public delegate void NumberLogEventHandler(object sender, LogEventArgs e);
 
     public class KinectManager : IDisposable
     {
 
-        public event MyRefreshScreenHandler OnSomebody;
-
-        public event MyRefreshScreenHandler OnNobody;
+        // Events
+        public event EventHandler OnSomebody;
+        public event EventHandler OnNobody;
+        // This one only updates the number, not the imagesource
+        public event NumberLogEventHandler OnNumberLog;
+        // This one updates both the number and the imagesource
+        public event NumberLogEventHandler OnImageLog;
 
         /// <summary>
         /// Map depth range to byte range
@@ -51,10 +53,12 @@ namespace Pfiguero.Samples.ImageReel
         /// </summary>
         private FrameDescription depthFrameDescription = null;
 
+        // To Do: Change to a normal attribute, non static...
         private static int frameCount = 0;
+
         private double val = 0;
         private double stdDev = 20000; // from a small sample...
-        private int nVal = 0;
+        private int procFrame = 0; // Processed frame
         private bool isCurStateNobody = true;
 
         public int Width
@@ -119,17 +123,17 @@ namespace Pfiguero.Samples.ImageReel
                 sum += depth;
             }
 
-            // sample of the 1st 10 values... Assuming nobody is in front...
-            if (nVal < 10)
+            // sample of the 1st 10 frames... Assuming nobody is in front...
+            if (procFrame < 10)
             {
-                nVal++;
                 val += sum;
+                procFrame++;
             }
-            else if (nVal == 10)
+            else if (procFrame == 10)
             {
-                val /= nVal;
-                Debug.WriteLine("VAL PROM: " + val);
-                nVal++; // just to put it outside this loop
+                val /= procFrame;
+                //Debug.WriteLine("VAL PROM: " + val);
+                procFrame++; 
             }
             else
             {
@@ -143,6 +147,24 @@ namespace Pfiguero.Samples.ImageReel
                     isCurStateNobody = true;
                     OnNobody(this, new EventArgs());
                 }
+                procFrame++;
+            }
+
+            LogEventArgs e = null;
+            if ( OnNumberLog != null || OnImageLog != null)
+            {
+                e = new LogEventArgs();
+                e.FrameId = procFrame;
+                e.Number = (int)sum;
+            }
+            if (OnNumberLog != null)
+            {
+                OnNumberLog(this, e);
+            }
+            if ( OnImageLog != null)
+            {
+                // TO DO: do something to save the image...
+                OnImageLog(this, e);
             }
         }
 
@@ -157,6 +179,7 @@ namespace Pfiguero.Samples.ImageReel
         {
            //bool depthFrameProcessed = false;
 
+            // process every tenth frame, for performance purposes
             if (frameCount++ % 10 != 0)
                 return;
 

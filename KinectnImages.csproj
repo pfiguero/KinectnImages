@@ -161,7 +161,9 @@
   <ItemGroup>
     <Resource Include="data\Creative_Commons_-_Slide2.jpg" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="data\test\colin-moldenhauer-749870-unsplash.jpg" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="data\test\1280px-Beautiful_Wind_Turbine_for_Renewable_Electricity_Generator.png" />
     <Resource Include="data\test\18806020a61d8f15954ecb05f588b008.jpg" />

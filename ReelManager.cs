@@ -20,6 +20,7 @@ namespace Pfiguero.Samples.ImageReel
     public class ReelManager
     {
         // Input structure from the file
+        // The last image is used as background.
         struct MyFile
         {
             public ImageInfo[] images;
@@ -73,7 +74,7 @@ namespace Pfiguero.Samples.ImageReel
                 uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
                 reel[i] = new InfoReel();
                 reel[i].image = CheckSize(new BitmapImage(uri), width, height);
-                Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
+                // Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
 
             s = @"..\..\..\data\" + directory + "\\" + f.images[f.images.Length-1].filename;
@@ -246,7 +247,7 @@ namespace Pfiguero.Samples.ImageReel
         public void ToggleSize()
         {
             DoubleAnimation da = null;
-            Debug.WriteLine("ToggleSize");
+            //Debug.WriteLine("ToggleSize");
             for (int i=0;i<reel.Length;i++)
             {
                 if (reel[i].IsBig)

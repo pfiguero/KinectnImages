@@ -55,10 +55,10 @@ namespace Pfiguero.Samples.ImageReel
             reelManager.StartAnimation();
 
             allowEvents = true;
-            kinectManager.OnSomebody += new MyRefreshScreenHandler(w1.OnResize);
-            kinectManager.OnNobody += new MyRefreshScreenHandler(w1.OnResize);
 
-
+            kinectManager.OnSomebody += w1.OnResize;
+            kinectManager.OnNobody += w1.OnResize;
+            kinectManager.OnNumberLog += this.OnNumberLog;
         }
 
         public void OnDoubleClick()
@@ -77,6 +77,11 @@ namespace Pfiguero.Samples.ImageReel
                 aTimer.Enabled = true;
                 reelManager.ToggleSize();
             }
+        }
+
+        public void OnNumberLog(Object source, LogEventArgs e)
+        {
+            Debug.WriteLine("Log. Sum: {0}", e.Number);
         }
 
         private void OnTimer(Object source, ElapsedEventArgs e)

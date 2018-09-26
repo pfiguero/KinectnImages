@@ -1,4 +1,12 @@
-﻿August 29th, 2018 (pfiguero)
+﻿September 25th, 2018 (pfiguero)
+
+For more comments, see the git logs... ;)
+Some future work:
+- Add sound effects. I liked this one: 
+https://freesound.org/people/Setuniman/sounds/274787/
+- Do an analysis of the collected data. It is not clear if the fixed std. dev. is ok for detecting if somebody is in front.
+
+August 29th, 2018 (pfiguero)
 
 First version that works... kind of... ;) 
 It is based on DepthBasics-WPF from the Kinect Studio Browser
