@@ -57,7 +57,7 @@ namespace Pfiguero.Samples.ImageReel
         private static int frameCount = 0;
 
         private double val = 0;
-        private double stdDev = 20000; // from a small sample...
+        private double stdDev = 120000; // from a small sample...
         private int procFrame = 0; // Processed frame
         private bool isCurStateNobody = true;
 
@@ -110,11 +110,11 @@ namespace Pfiguero.Samples.ImageReel
             ushort* frameData = (ushort*)depthFrameData;
 
             // The sum of a row is an indication of what is in front...
-            int r = this.Width / 2;
+            int r = this.Height / 2;
             uint sum = 0;
-            for (int c = 0; c < this.Height; c++)
+            for (int c = 0; c < this.Width; c++)
             {
-                int i = r + c * this.Width; // * this.depthFrameDescription.BytesPerPixel;
+                int i = r * this.Width + c; // * this.depthFrameDescription.BytesPerPixel;
                 ushort depth = 0;
                 if (i < (int)(depthFrameDataSize / this.GetBytesPerPixel()))
                 {

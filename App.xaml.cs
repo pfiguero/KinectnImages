@@ -44,7 +44,7 @@ namespace Pfiguero.Samples.ImageReel
             w1.Height = SystemParameters.VirtualScreenHeight;
             w1.Show();
 
-            reelManager = new ReelManager("test.json", w1.Width, w1.Height );
+            reelManager = new ReelManager("msc.json", w1.Width, w1.Height );
 
 
             var rt = new TranslateTransform();
