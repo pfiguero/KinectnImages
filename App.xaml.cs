@@ -11,22 +11,32 @@ namespace Pfiguero.Samples.ImageReel
     using System.Timers;
     using System.Windows;
     using System.Windows.Media;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Interaction logic for App
+    /// Some References:
+    /// https://social.msdn.microsoft.com/Forums/vstudio/en-US/5d181304-8952-4663-8c3c-dc4d986aa8dd/dual-screen-application-and-wpf?forum=wpf
+    /// https://stackoverflow.com/questions/2704887/is-there-a-wpf-equaivalent-to-system-windows-forms-screen
     /// </summary>
     public partial class App : Application
     {
-        private ReelManager reelManager = null;
+        private ReelManager<InfoReel> reelManager = null;
         private KinectManager kinectManager = null;
         private bool allowEvents = false;
+        private Dictionary<string, string> cmdLine = null;
 
-        // Excerpts from https://social.msdn.microsoft.com/Forums/vstudio/en-US/5d181304-8952-4663-8c3c-dc4d986aa8dd/dual-screen-application-and-wpf?forum=wpf
-        // and https://stackoverflow.com/questions/2704887/is-there-a-wpf-equaivalent-to-system-windows-forms-screen
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
             allowEvents = false;
+
+            cmdLine = new Dictionary<string, string>();
+            for (int index = 0; index < e.Args.Length; index += 2)
+            {
+                cmdLine.Add(e.Args[index], e.Args[index + 1]);
+            }
 
             _OnStartup2(e);
         }
@@ -44,7 +54,16 @@ namespace Pfiguero.Samples.ImageReel
             w1.Height = SystemParameters.VirtualScreenHeight;
             w1.Show();
 
-            reelManager = new ReelManager("msc.json", w1.Width, w1.Height );
+            string jsonFile;
+            if(cmdLine.ContainsKey("-json"))
+            {
+                jsonFile = cmdLine["-json"];
+            }
+            else
+            {
+                jsonFile = "test.json";
+            }
+            reelManager = new ReelManager<InfoReel>(jsonFile, w1.Width, w1.Height );
 
 
             var rt = new TranslateTransform();

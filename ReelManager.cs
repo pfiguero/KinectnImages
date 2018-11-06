@@ -17,39 +17,61 @@ namespace Pfiguero.Samples.ImageReel
     using System.Windows.Media.Animation;
     using Newtonsoft.Json;
 
-    public class ReelManager
+    // Computed info from the input structure
+    public abstract class InfoReelAbs
+    {
+        public abstract ImageSource Image { get; set; }
+        public TransformGroup trGroup;
+        public TransformGroup trGroupLocal;
+        public ScaleTransform scaleT;
+        public bool IsBig { get; set; }
+
+        public InfoReelAbs() { }
+    }
+
+    public class InfoReel: InfoReelAbs
+    {
+        private ImageSource image;
+
+        public override ImageSource Image
+        {
+            get
+            {
+                return image;
+            }
+            set
+            {
+                image = value;
+            }
+        }
+
+        public InfoReel(): base() { }
+    }
+
+    public class ReelManager<InfoReelT> where InfoReelT : InfoReelAbs, new()
     {
         // Input structure from the file
         // The last image is used as background.
-        struct MyFile
+        protected struct MyFile
         {
             public ImageInfo[] images;
         }
-        struct ImageInfo
+        protected struct ImageInfo
         {
             public String filename;
             public String title;
         }
 
-        // Computed info from the input structure
-        public struct InfoReel
-        {
-            public ImageSource image;
-            public TransformGroup trGroup;
-            public TransformGroup trGroupLocal;
-            public ScaleTransform scaleT;
-            public bool IsBig { get; set; }
-        }
+        private InfoReelT[] reel = null;
 
-        public InfoReel[] reel = null;
-        public ImageSource background = null;
+        protected ImageSource background = null;
 
-        public double LastPos { get; set;  }
+        protected double LastPos { get; set;  }
 
         // for the animation of the reel
-        private TranslateTransform tr = null;
-        private double width;
-        private double height;
+        protected TranslateTransform tr = null;
+        protected double width;
+        protected double height;
 
         public ReelManager(String jsonName, double _width, double _height )
         {
@@ -63,7 +85,7 @@ namespace Pfiguero.Samples.ImageReel
             MyFile f = JsonConvert.DeserializeObject<MyFile>(File.ReadAllText(System.IO.Path.Combine(Environment.CurrentDirectory, p)));
 
             // Last image is saved for background
-            reel = new InfoReel[f.images.Length-1];
+            reel = new InfoReelT[f.images.Length-1];
             Uri uri;
             char[] seps = { '.' };
             String directory = jsonName.Split(seps)[0];
@@ -72,8 +94,8 @@ namespace Pfiguero.Samples.ImageReel
             {
                 s = @"..\..\..\data\" + directory + "\\" + f.images[i].filename;
                 uri = new System.Uri(System.IO.Path.Combine(Environment.CurrentDirectory, s));
-                reel[i] = new InfoReel();
-                reel[i].image = CheckSize(new BitmapImage(uri), width, height);
+                reel[i] = new InfoReelT();
+                reel[i].Image = CheckSize(new BitmapImage(uri), width, height);
                 // Debug.WriteLine("Width: " + reel[i].image.Width + " Height: " + reel[i].image.Height);
             }
 
@@ -148,15 +170,15 @@ namespace Pfiguero.Samples.ImageReel
             reel[0].scaleT.ScaleY = 1;
             reel[0].IsBig = true;
             reel[0].trGroupLocal.Children.Add(reel[0].scaleT);
-            reel[0].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[0].image.Height) / 2));
+            reel[0].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[0].Image.Height) / 2));
 
-            LastPos += trMargin.X + reel[0].image.Width;
+            LastPos += trMargin.X + reel[0].Image.Width;
 
             for (int i = 1; i < reel.Length; i++)
             {
                 reel[i].trGroup = new TransformGroup();
                 reel[i].trGroup.Children.Add(reel[i-1].trGroup);
-                reel[i].trGroup.Children.Add(new TranslateTransform(reel[i-1].image.Width,0.0));
+                reel[i].trGroup.Children.Add(new TranslateTransform(reel[i-1].Image.Width,0.0));
                 reel[i].trGroup.Children.Add(trMargin);
 
                 reel[i].trGroupLocal = new TransformGroup();
@@ -166,12 +188,12 @@ namespace Pfiguero.Samples.ImageReel
                 reel[i].scaleT.ScaleY = 1;
                 reel[i].IsBig = true;
                 reel[i].trGroupLocal.Children.Add(reel[i].scaleT);
-                reel[i].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[i].image.Height) / 2));
+                reel[i].trGroupLocal.Children.Add(new TranslateTransform(0.0, (screenHeight - reel[i].Image.Height) / 2));
 
-                LastPos += trMargin.X + reel[i].image.Width;
+                LastPos += trMargin.X + reel[i].Image.Width;
             }
 
-            LastPos += trMargin.X + reel[reel.Length-1].image.Width;
+            LastPos += trMargin.X + reel[reel.Length-1].Image.Width;
 
             Canvas canvas = w.canvas;
             // background
@@ -195,11 +217,11 @@ namespace Pfiguero.Samples.ImageReel
             {
                 rects[i] = new Rectangle()
                 {
-                    Width = this.reel[i].image.Width,
-                    Height = this.reel[i].image.Height
+                    Width = this.reel[i].Image.Width,
+                    Height = this.reel[i].Image.Height
                 };
                 ImageBrush ib = new ImageBrush();
-                ib.ImageSource = this.reel[i].image;
+                ib.ImageSource = this.reel[i].Image;
                 rects[i].Fill = ib;
                 rects[i].RenderTransform = reel[i].trGroupLocal;
 
@@ -312,29 +334,29 @@ namespace Pfiguero.Samples.ImageReel
         //}
 
 
-        public void DrawImages(int howMuch, Rectangle[] rects, int[] xPosRects)
-        {
-            if (tr != null)
-                return;
-            for (int i = 0; i < this.reel.Length; i++)
-            {
-                //int x = xPosRects[i] - howMuch;
-                //if (x + this.reel[i].image.Width < 0)
-                //    x = this.LastPos + 30; // margin!!! Unify!!!
-                xPosRects[i] -= howMuch;
-                if (xPosRects[i] + this.reel[i].image.Width < 0)
-                {
-                    int last = i - 1;
-                    if (last < 0)
-                        last = this.reel.Length - 1;
-                    xPosRects[i] = (int)(xPosRects[last] + this.reel[last].image.Width + 30); // margin!!! Unify!!!
-                }
-                Canvas.SetLeft(rects[i], xPosRects[i]);
-            }
-            //howMuch += 10;
-            //if (howMuch > 2560)
-            //    howMuch -= 2560;
-        }
+        //public void DrawImages(int howMuch, Rectangle[] rects, int[] xPosRects)
+        //{
+        //    if (tr != null)
+        //        return;
+        //    for (int i = 0; i < this.reel.Length; i++)
+        //    {
+        //        //int x = xPosRects[i] - howMuch;
+        //        //if (x + this.reel[i].image.Width < 0)
+        //        //    x = this.LastPos + 30; // margin!!! Unify!!!
+        //        xPosRects[i] -= howMuch;
+        //        if (xPosRects[i] + this.reel[i].image.Width < 0)
+        //        {
+        //            int last = i - 1;
+        //            if (last < 0)
+        //                last = this.reel.Length - 1;
+        //            xPosRects[i] = (int)(xPosRects[last] + this.reel[last].image.Width + 30); // margin!!! Unify!!!
+        //        }
+        //        Canvas.SetLeft(rects[i], xPosRects[i]);
+        //    }
+        //    //howMuch += 10;
+        //    //if (howMuch > 2560)
+        //    //    howMuch -= 2560;
+        //}
 
         public void SetAnimationTranslation(TranslateTransform _tr)
         {
