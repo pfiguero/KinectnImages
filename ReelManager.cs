@@ -150,6 +150,7 @@ namespace Pfiguero.Samples.ImageReel
         {
             LastPos = 0.0;
 
+            // To Do: It is rewritten when several screens are shown... How should be taken into account?
             TranslateTransform trDelta = new TranslateTransform();
             trDelta.X = initDelta;
 
@@ -161,6 +162,7 @@ namespace Pfiguero.Samples.ImageReel
 
             reel[0].trGroup = new TransformGroup();
             reel[0].trGroup.Children.Add(tr);
+            //reel[0].trGroup.Children.Add(trDelta);
             reel[0].trGroup.Children.Add(trMargin);
 
             reel[0].trGroupLocal = new TransformGroup();

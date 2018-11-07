@@ -87,7 +87,8 @@ namespace Pfiguero.Samples.ImageReel
             {
                 jsonFile = "test.json";
             }
-            reelManager = new ReelManager<InfoReel>(jsonFile, w1.Width, w1.Height );
+            reelManager = new ReelManager<InfoReel>(jsonFile, (int)SystemParameters.VirtualScreenWidth,
+                (int)SystemParameters.VirtualScreenHeight );
 
 
             var rt = new TranslateTransform();
@@ -96,7 +97,7 @@ namespace Pfiguero.Samples.ImageReel
             reelManager.CreateRects(w1, 0);
             if (numW == 2)
             {
-                reelManager.CreateRects(w2, (int) (SystemParameters.VirtualScreenWidth / 2));
+                reelManager.CreateRects(w2, (int)(SystemParameters.VirtualScreenWidth / 2));
             }
 
             reelManager.StartAnimation();
@@ -128,7 +129,7 @@ namespace Pfiguero.Samples.ImageReel
 
         public void OnNumberLog(Object source, LogEventArgs e)
         {
-            Debug.WriteLine("Log. Sum: {0}", e.Number);
+            //Debug.WriteLine("Log. Sum: {0}", e.Number);
         }
 
         private void OnTimer(Object source, ElapsedEventArgs e)
