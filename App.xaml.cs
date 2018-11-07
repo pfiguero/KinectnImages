@@ -47,12 +47,36 @@ namespace Pfiguero.Samples.ImageReel
             //kinectManager.GetImage();
             //kinectManager.RefreshImage();
 
+            int numW = 1;
+            if(cmdLine.ContainsKey("-numW"))
+            {
+                numW = Convert.ToInt16(cmdLine["-numW"]);
+            }
             Window1 w1 = new Window1(this);
             w1.Top = SystemParameters.VirtualScreenTop;
             w1.Left = SystemParameters.VirtualScreenLeft;
-            w1.Width = SystemParameters.VirtualScreenWidth; // /2; // when two screens
+            if(numW == 2)
+            { 
+                w1.Width = SystemParameters.VirtualScreenWidth / 2; 
+            }
+            else
+            {
+                w1.Width = SystemParameters.VirtualScreenWidth; 
+            }
             w1.Height = SystemParameters.VirtualScreenHeight;
             w1.Show();
+
+            Window1 w2 = null;
+            if (numW == 2)
+            {
+                w2 = new Window1(this);
+                w2.Top = SystemParameters.VirtualScreenTop;
+                w2.Left = SystemParameters.VirtualScreenWidth / 2;
+                w2.Width = SystemParameters.VirtualScreenWidth / 2;
+                w2.Height = SystemParameters.VirtualScreenHeight;
+                w2.Show();
+            }
+
 
             string jsonFile;
             if(cmdLine.ContainsKey("-json"))
@@ -70,6 +94,10 @@ namespace Pfiguero.Samples.ImageReel
             reelManager.SetAnimationTranslation(rt);
 
             reelManager.CreateRects(w1, 0);
+            if (numW == 2)
+            {
+                reelManager.CreateRects(w2, (int) (SystemParameters.VirtualScreenWidth / 2));
+            }
 
             reelManager.StartAnimation();
 
