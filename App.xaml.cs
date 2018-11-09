@@ -61,7 +61,7 @@ namespace Pfiguero.Samples.ImageReel
             }
             else
             {
-                w1.Width = SystemParameters.VirtualScreenWidth; 
+                w1.Width = SystemParameters.MaximizedPrimaryScreenWidth; 
             }
             w1.Height = SystemParameters.VirtualScreenHeight;
             w1.Show();
@@ -87,9 +87,16 @@ namespace Pfiguero.Samples.ImageReel
             {
                 jsonFile = "test.json";
             }
-            reelManager = new ReelManager<InfoReel>(jsonFile, (int)SystemParameters.VirtualScreenWidth,
-                (int)SystemParameters.VirtualScreenHeight );
-
+            if (numW == 2)
+            {
+                reelManager = new ReelManager<InfoReel>(jsonFile, (int)SystemParameters.VirtualScreenWidth,
+                (int)SystemParameters.VirtualScreenHeight);
+            }
+            else
+            {
+                reelManager = new ReelManager<InfoReel>(jsonFile, (int)SystemParameters.MaximizedPrimaryScreenWidth,
+                (int)SystemParameters.VirtualScreenHeight);
+            }
 
             var rt = new TranslateTransform();
             reelManager.SetAnimationTranslation(rt);
